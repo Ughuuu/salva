@@ -12,8 +12,8 @@ parallel = [ "rapier_testbed2d/parallel"]
 Inflector  = "0.11"
 nalgebra   = "0.32"
 parry2d = "0.15"
-rapier2d = "0.19"
-rapier_testbed2d = "0.19"
+rapier2d = "0.20"
+rapier_testbed2d = "0.20"
 parry3d = "0.15"
 bevy = "0.13"
 
