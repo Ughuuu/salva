@@ -14,6 +14,7 @@ edition = "2021"
 [features]
 default = [ "dim3" ]
 dim3    = [ ]
+profiler = [ ]
 parallel = [ "rayon" ]
 rapier = [ "parry", "rapier3d" ]
 sampling = [ "rapier" ]
@@ -34,13 +35,13 @@ num-traits = "0.2"
 fnv = "1.0"
 itertools = "0.12"
 generational-arena = "0.2"
-instant = { version = "0.1", features = [ "now" ] }
+instant = { version = "0.1", features = [ "now" ], optional = true }
 rayon = { version = "1.8", optional = true }
 
-nalgebra  = "0.32"
-parry3d = { version = "0.15", optional = true }
-rapier3d = { version = "0.20", optional = true }
-rapier_testbed3d = { version = "0.20", optional = true }
+nalgebra  = "0.33"
+parry3d = { version = "0.16", optional = true }
+rapier3d = { version = "0.21", optional = true }
+rapier_testbed3d = { version = "0.21", optional = true }
 
 bevy_egui = { version = "0.23", features = ["immutable_ctx"], optional = true }
 

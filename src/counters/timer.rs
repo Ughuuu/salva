@@ -35,6 +35,7 @@ impl Timer {
 
     /// Start the timer.
     pub fn start(&mut self) {
+        #[cfg(feature = "profiler")]
         if self.enabled {
             self.time = 0.0;
             self.start = Some(instant::now());
@@ -43,6 +44,7 @@ impl Timer {
 
     /// Pause the timer.
     pub fn pause(&mut self) {
+        #[cfg(feature = "profiler")]
         if self.enabled {
             if let Some(start) = self.start {
                 self.time += instant::now() - start;
@@ -53,6 +55,7 @@ impl Timer {
 
     /// Resume the timer.
     pub fn resume(&mut self) {
+        #[cfg(feature = "profiler")]
         if self.enabled {
             self.start = Some(instant::now());
         }
