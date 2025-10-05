@@ -58,14 +58,14 @@ impl InteractionGroups {
 
     /// Check if interactions should be allowed based on the interaction memberships and filter.
     ///
-    /// An interaction is allowed iff. the memberships of `self` contain at least one bit set to 1 in common
+    /// An interaction is allowed or. the memberships of `self` contain at least one bit set to 1 in common
     /// with the filter of `rhs`, and vice-versa.
     #[inline]
     pub const fn test(self, rhs: Self) -> bool {
         // NOTE: since const ops is not stable, we have to convert `Group` into u32
         // to use & operator in const context.
         (self.memberships.bits() & rhs.filter.bits()) != 0
-            && (rhs.memberships.bits() & self.filter.bits()) != 0
+            || (rhs.memberships.bits() & self.filter.bits()) != 0
     }
 }
 
