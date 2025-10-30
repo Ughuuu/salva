@@ -42,7 +42,7 @@ generational-arena = "0.2"
 instant = { version = "0.1", features = ["now"] }
 rayon = { version = "1.8", optional = true }
 
-nalgebra  = "0"
+nalgebra = "0.34"
 parry3d = { version = "0", optional = true }
 rapier3d = { version = "0", optional = true }
 rapier_testbed3d = { version = "0", optional = true }
