@@ -209,15 +209,15 @@ impl<'a> CouplingManager for ColliderCouplingManager<'a> {
                                     // Check interaction groups between this fluid and the boundary.
                                     // Use the fluid's interaction groups explicitly to mirror checks
                                     // performed elsewhere in the codebase.
-                                    let fluid_groups = fluid.interaction_groups;
-                                    let boundary_groups = boundary.interaction_groups;
+                                    //let fluid_groups = fluid.interaction_groups;
+                                    //let boundary_groups = boundary.interaction_groups;
                                     
-                                    println!("DynamicContactSampling: fluid_groups={:?}, boundary_groups={:?}, test result={}", 
-                                        fluid_groups, boundary_groups, fluid_groups.test(boundary_groups));
+                                    //println!("DynamicContactSampling: fluid_groups={:?}, boundary_groups={:?}, test result={}", 
+                                    //    fluid_groups, boundary_groups, fluid_groups.test(boundary_groups));
                                     
-                                    if !fluid_groups.test(boundary_groups) {
-                                        continue;
-                                    }
+                                    //if !fluid_groups.test(boundary_groups) {
+                                    //    continue;
+                                    //}
                                     
                                     let particle_pos = fluid.positions[*particle_id]
                                         + fluid.velocities[*particle_id] * timestep.dt();
