@@ -202,12 +202,20 @@ impl<'a> CouplingManager for ColliderCouplingManager<'a> {
                             .cells_intersecting_aabb(&aabb.mins, &aabb.maxs)
                             .flat_map(|e| e.1)
                         {
-                            match particle {
+                                match particle {
                                 HGridEntry::FluidParticle(fluid_id, particle_id) => {
                                     let fluid = &mut fluids[*fluid_id];
+
+                                    // Check interaction groups between this fluid and the boundary.
+                                    // Use the fluid's interaction groups explicitly to mirror checks
+                                    // performed elsewhere in the codebase.
+                                    let fluid_groups = fluid.interaction_groups;
+                                    let boundary_groups = boundary.interaction_groups;
                                     
-                                    // Check interaction groups
-                                    if !boundary.interaction_groups.test(fluid.interaction_groups) {
+                                    println!("DynamicContactSampling: fluid_groups={:?}, boundary_groups={:?}, test result={}", 
+                                        fluid_groups, boundary_groups, fluid_groups.test(boundary_groups));
+                                    
+                                    if !fluid_groups.test(boundary_groups) {
                                         continue;
                                     }
                                     
