@@ -26,6 +26,10 @@ pub struct LiquidWorld {
     contact_manager: ContactManager,
     timestep_manager: TimestepManager,
     hgrid: HGrid<HGridEntry>,
+    /// Coefficient applied when transmitting forces from fluids to coupled rigid bodies.
+    /// A value of 1.0 applies full force, 0.5 applies half force, etc.
+    /// Default is 1.0.
+    pub boundary_force_coefficient: Real,
 }
 
 impl LiquidWorld {
@@ -36,10 +40,13 @@ impl LiquidWorld {
     /// - `particle_radius`: the radius of every particle on this world.
     /// - `smoothing_factor`: the smoothing factor used to compute the SPH kernel radius.
     ///    The kernel radius will be computed as `particle_radius * smoothing_factor * 2.0.
+    /// - `boundary_force_coefficient`: coefficient applied when transmitting forces from fluids to boundaries.
+    ///    Default is 1.0 (full force). Use lower values (e.g., 0.5) to reduce fluid influence on rigid bodies.
     pub fn new(
         solver: impl PressureSolver + Send + Sync + 'static,
         particle_radius: Real,
         smoothing_factor: Real,
+        boundary_force_coefficient: Real,
     ) -> Self {
         let h = particle_radius * smoothing_factor * na::convert::<_, Real>(2.0);
         Self {
@@ -53,6 +60,7 @@ impl LiquidWorld {
             contact_manager: ContactManager::new(),
             timestep_manager: TimestepManager::new(particle_radius),
             hgrid: HGrid::new(h),
+            boundary_force_coefficient,
         }
     }
 
@@ -143,7 +151,7 @@ impl LiquidWorld {
                 self.boundaries.as_slice(),
             );
 
-            coupling.transmit_forces(&self.timestep_manager, &self.boundaries);
+            coupling.transmit_forces(&self.timestep_manager, &self.boundaries, self.boundary_force_coefficient);
             self.counters.stages.solver_time.pause();
         }
 

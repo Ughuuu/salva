@@ -32,10 +32,23 @@ impl FluidsPipeline {
     /// - `smoothing_factor`: the smoothing factor used to compute the SPH kernel radius.
     ///    The kernel radius will be computed as `particle_radius * smoothing_factor * 2.0.
     pub fn new(particle_radius: math::Real, smoothing_factor: math::Real) -> Self {
+        Self::new_with_boundary_coef(particle_radius, smoothing_factor, na::one::<math::Real>())
+    }
+
+    /// Initialize a new pipeline for fluids simulation with a custom boundary force coefficient.
+    ///
+    /// # Parameters
+    ///
+    /// - `particle_radius`: the radius of every particle for the fluid simulation.
+    /// - `smoothing_factor`: the smoothing factor used to compute the SPH kernel radius.
+    ///    The kernel radius will be computed as `particle_radius * smoothing_factor * 2.0.
+    /// - `boundary_force_coefficient`: coefficient applied when transmitting forces from fluids to boundaries.
+    ///    Use 1.0 for full force, 0.5 for half force, etc.
+    pub fn new_with_boundary_coef(particle_radius: math::Real, smoothing_factor: math::Real, boundary_force_coefficient: math::Real) -> Self {
         let dfsph: DFSPHSolver = DFSPHSolver::new();
 
         Self {
-            liquid_world: LiquidWorld::new(dfsph, particle_radius, smoothing_factor),
+            liquid_world: LiquidWorld::new(dfsph, particle_radius, smoothing_factor, boundary_force_coefficient),
             coupling: ColliderCouplingSet::new(),
         }
     }
@@ -271,7 +284,7 @@ impl<'a> CouplingManager for ColliderCouplingManager<'a> {
         }
     }
 
-    fn transmit_forces(&mut self, timestep: &TimestepManager, boundaries: &BoundarySet) {
+    fn transmit_forces(&mut self, timestep: &TimestepManager, boundaries: &BoundarySet, force_coefficient: math::Real) {
         for (collider, coupling) in &self.coupling.entries {
             if let (Some(collider), Some(boundary)) = (
                 self.colliders.get(*collider),
@@ -288,7 +301,7 @@ impl<'a> CouplingManager for ColliderCouplingManager<'a> {
                             for (pos, force) in
                                 boundary.positions.iter().zip(forces.iter().cloned())
                             {
-                                body.apply_impulse_at_point(force * timestep.dt(), *pos, true)
+                                body.apply_impulse_at_point(force * timestep.dt() * force_coefficient, *pos, true)
                             }
                         }
                     }
