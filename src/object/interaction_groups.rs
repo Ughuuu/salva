@@ -7,14 +7,14 @@
 /// - The interaction groups memberships.
 /// - The interaction groups filter.
 ///
-/// An interaction is allowed between two filters `a` and `b` when two conditions
-/// are met simultaneously:
+/// An interaction is allowed between two filters `a` and `b` when at least one of
+/// these conditions is met:
 /// - The groups membership of `a` has at least one bit set to `1` in common with the groups filter of `b`.
 /// - The groups membership of `b` has at least one bit set to `1` in common with the groups filter of `a`.
 ///
 /// In other words, interactions are allowed between two filter iff. the following condition is met:
 /// ```ignore
-/// (self.memberships & rhs.filter) != 0 && (rhs.memberships & self.filter) != 0
+/// (self.memberships & rhs.filter) != 0 || (rhs.memberships & self.filter) != 0
 /// ```
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 #[repr(C)]
@@ -58,8 +58,9 @@ impl InteractionGroups {
 
     /// Check if interactions should be allowed based on the interaction memberships and filter.
     ///
-    /// An interaction is allowed or. the memberships of `self` contain at least one bit set to 1 in common
-    /// with the filter of `rhs`, and vice-versa.
+    /// An interaction is allowed if the memberships of `self` contain at least one bit set to 1 in common
+    /// with the filter of `rhs`, OR if the memberships of `rhs` contain at least one bit set to 1 in common
+    /// with the filter of `self`.
     #[inline]
     pub const fn test(self, rhs: Self) -> bool {
         // NOTE: since const ops is not stable, we have to convert `Group` into u32
