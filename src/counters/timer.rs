@@ -37,7 +37,7 @@ impl Timer {
     pub fn start(&mut self) {
         if self.enabled {
             self.time = 0.0;
-            self.start = Some(instant::now());
+            //self.start = Some(instant::now());
         }
     }
 
@@ -45,7 +45,7 @@ impl Timer {
     pub fn pause(&mut self) {
         if self.enabled {
             if let Some(start) = self.start {
-                self.time += instant::now() - start;
+                //self.time += instant::now() - start;
             }
             self.start = None;
         }
@@ -54,7 +54,7 @@ impl Timer {
     /// Resume the timer.
     pub fn resume(&mut self) {
         if self.enabled {
-            self.start = Some(instant::now());
+            //self.start = Some(instant::now());
         }
     }
 
