@@ -23,7 +23,7 @@ pub struct Fluid {
     /// The rest density of this fluid.
     pub density0: Real,
     /// Mask indicating what particles have been deleted.
-    deleted_particles: Vec<bool>,
+    pub deleted_particles: Vec<bool>,
     /// Indicates if a bit of the `deleted_particles` mask has been set.
     num_deleted_particles: usize,
     /// The particles radius.
