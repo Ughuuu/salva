@@ -245,7 +245,7 @@ impl LiquidWorld {
                 }
                 HGridEntry::BoundaryParticle(bid, pid) => {
                     let (boundary, handle) = self.boundaries.get_from_contiguous_index(*bid)?;
-
+                    
                     // --- DEFENSIVE FIX ---
                     // Add a bounds check. This handles the race condition where
                     // a boundary's particles are cleared or the boundary is freed
@@ -254,8 +254,8 @@ impl LiquidWorld {
                         return None;
                     }
                     // --- END FIX ---
-
-                    let pt = boundary.positions[*pid]; // This was the panic line
+                    
+                    let pt = boundary.positions[*pid]; // FIXME: use `distance_to_local_point` once it's supported.
                     let id = &Isometry::identity();
                     if aabb.distance_to_point(id, &pt, true) < self.particle_radius {
                         Some(ParticleId::BoundaryParticle(handle, *pid))
@@ -315,6 +315,7 @@ impl LiquidWorld {
                 }
             })
     }
+}
 
 #[test]
 fn world_is_send_and_sync() {
