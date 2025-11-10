@@ -227,6 +227,12 @@ impl LiquidWorld {
             .filter_map(move |entry| match entry {
                 HGridEntry::FluidParticle(fid, pid) => {
                     let (fluid, handle) = self.fluids.get_from_contiguous_index(*fid)?;
+
+                    // Defensive bounds check for fluids
+                    if *pid >= fluid.positions.len() {
+                        return None;
+                    }
+
                     let pt = fluid.positions[*pid];
 
                     // FIXME: use `distance_to_local_point` once it's supported.
@@ -239,7 +245,17 @@ impl LiquidWorld {
                 }
                 HGridEntry::BoundaryParticle(bid, pid) => {
                     let (boundary, handle) = self.boundaries.get_from_contiguous_index(*bid)?;
-                    let pt = boundary.positions[*pid]; // FIXME: use `distance_to_local_point` once it's supported.
+
+                    // --- DEFENSIVE FIX ---
+                    // Add a bounds check. This handles the race condition where
+                    // a boundary's particles are cleared or the boundary is freed
+                    // but the hgrid is not yet updated.
+                    if *pid >= boundary.positions.len() {
+                        return None;
+                    }
+                    // --- END FIX ---
+
+                    let pt = boundary.positions[*pid]; // This was the panic line
                     let id = &Isometry::identity();
                     if aabb.distance_to_point(id, &pt, true) < self.particle_radius {
                         Some(ParticleId::BoundaryParticle(handle, *pid))
@@ -267,6 +283,12 @@ impl LiquidWorld {
             .filter_map(move |entry| match entry {
                 HGridEntry::FluidParticle(fid, pid) => {
                     let (fluid, handle) = self.fluids.get_from_contiguous_index(*fid)?;
+
+                    // Defensive bounds check for fluids
+                    if *pid >= fluid.positions.len() {
+                        return None;
+                    }
+
                     let pt = fluid.positions[*pid];
 
                     if shape.distance_to_point(pos, &pt, true) <= self.particle_radius {
@@ -277,6 +299,13 @@ impl LiquidWorld {
                 }
                 HGridEntry::BoundaryParticle(bid, pid) => {
                     let (boundary, handle) = self.boundaries.get_from_contiguous_index(*bid)?;
+
+                    // --- DEFENSIVE FIX ---
+                    if *pid >= boundary.positions.len() {
+                        return None;
+                    }
+                    // --- END FIX ---
+
                     let pt = boundary.positions[*pid]; // FIXME: use `distance_to_local_point` once it's supported.
                     if shape.distance_to_point(pos, &pt, true) <= self.particle_radius {
                         Some(ParticleId::BoundaryParticle(handle, *pid))
@@ -286,7 +315,6 @@ impl LiquidWorld {
                 }
             })
     }
-}
 
 #[test]
 fn world_is_send_and_sync() {
