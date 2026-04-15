@@ -1,4 +1,4 @@
-use crate::math::{Isometry, Point, Real, Vector};
+use crate::math::{Isometry, Vector, Real, Vector};
 use crate::object::{ContiguousArena, ContiguousArenaIndex};
 
 use std::sync::RwLock;
@@ -10,7 +10,7 @@ use super::interaction_groups::InteractionGroups;
 /// A boundary object is composed of static particles, or of particles coupled with non-fluid bodies.
 pub struct Boundary {
     /// The world-space position of the boundary particles.
-    pub positions: Vec<Point<Real>>,
+    pub positions: Vec<Vector<Real>>,
     /// The artificial velocities of each boundary particle.
     pub velocities: Vec<Vector<Real>>,
     /// The volume computed for each boundary particle.
@@ -26,7 +26,7 @@ pub struct Boundary {
 impl Boundary {
     /// Initialize a boundary object with the given particles.
     pub fn new(
-        particle_positions: Vec<Point<Real>>,
+        particle_positions: Vec<Vector<Real>>,
         interaction_groups: InteractionGroups,
     ) -> Self {
         let num_particles = particle_positions.len();

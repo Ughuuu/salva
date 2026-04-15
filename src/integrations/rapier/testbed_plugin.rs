@@ -1,11 +1,11 @@
-use crate::math::{Isometry, Point, Real, Rotation, Translation, Vector};
+use crate::math::{Isometry, Vector, Real, Rotation, Translation, Vector};
 use crate::object::{BoundaryHandle, FluidHandle};
 use bevy::math::Quat;
 use bevy::prelude::{Assets, Commands, Mesh, Query, Transform};
 use bevy_egui::{egui::ComboBox, egui::Window, EguiContexts};
 #[cfg(feature = "dim3")]
 use na::Quaternion;
-use na::{Point3, Vector3};
+use na::{Vector3, Vector3};
 use parry::shape::SharedShape;
 use rapier_testbed::{
     harness::Harness, objects::node::EntityWithGraphics, BevyMaterial, GraphicsManager,
@@ -84,9 +84,9 @@ pub struct FluidsTestbedPlugin {
     fluids_pipeline: FluidsPipeline,
     f2sn: HashMap<FluidHandle, Vec<EntityWithGraphics>>,
     boundary2sn: HashMap<BoundaryHandle, Vec<EntityWithGraphics>>,
-    f2color: HashMap<FluidHandle, Point3<Real>>,
-    ground_color: Point3<Real>,
-    default_fluid_color: Point3<Real>,
+    f2color: HashMap<FluidHandle, Vector3<Real>>,
+    ground_color: Vector3<Real>,
+    default_fluid_color: Vector3<Real>,
     queue_graphics_reset: bool,
 }
 
@@ -102,8 +102,8 @@ impl FluidsTestbedPlugin {
             f2sn: HashMap::new(),
             boundary2sn: HashMap::new(),
             f2color: HashMap::new(),
-            ground_color: Point3::new(0.5, 0.5, 0.5),
-            default_fluid_color: Point3::new(0.0, 0.0, 0.5),
+            ground_color: Vector3::new(0.5, 0.5, 0.5),
+            default_fluid_color: Vector3::new(0.0, 0.0, 0.5),
             queue_graphics_reset: false,
         }
     }
@@ -120,7 +120,7 @@ impl FluidsTestbedPlugin {
     }
 
     /// Sets the color used to render the specified fluid.
-    pub fn set_fluid_color(&mut self, fluid: FluidHandle, color: Point3<Real>) {
+    pub fn set_fluid_color(&mut self, fluid: FluidHandle, color: Vector3<Real>) {
         let _ = self.f2color.insert(fluid, color);
     }
 
@@ -137,7 +137,7 @@ impl FluidsTestbedPlugin {
     // TODO: pass velocity & acceleration vectors in
     fn add_particle_graphics(
         &self,
-        particle: &Point<Real>,
+        particle: &Vector<Real>,
         particle_radius: Real,
         graphics: &mut GraphicsManager,
         commands: &mut Commands,
@@ -145,7 +145,7 @@ impl FluidsTestbedPlugin {
         materials: &mut Assets<BevyMaterial>,
         _components: &mut Query<&mut Transform>,
         _harness: &mut Harness,
-        color: &Point3<Real>,
+        color: &Vector3<Real>,
         force_shape: Option<SharedShape>,
     ) -> Vec<EntityWithGraphics> {
         let shape = if let Some(shape) = force_shape {
@@ -159,9 +159,9 @@ impl FluidsTestbedPlugin {
                 // #[cfg(feature = "dim2")]
                 //FIXME: This doesn't work, it is caused by either not being in prefab_meshes, or the shape_type not being supported.. somewhere
                 // FluidsRenderingMode::VelocityArrows { .. } => SharedShape::triangle(
-                //     Point::new(0., particle_radius),
-                //     Point::new(particle_radius * 0.4, -particle_radius * 0.8),
-                //     Point::new(-particle_radius * 0.4, -particle_radius * 0.8),
+                //     Vector::new(0., particle_radius),
+                //     Vector::new(particle_radius * 0.4, -particle_radius * 0.8),
+                //     Vector::new(-particle_radius * 0.4, -particle_radius * 0.8),
                 // ),
                 _ => SharedShape::ball(particle_radius),
             }
@@ -409,7 +409,7 @@ impl TestbedPlugin for FluidsTestbedPlugin {
                                         max,
                                     );
                                     entity
-                                        .set_color(materials, Point3::new(lerp.x, lerp.y, lerp.z));
+                                        .set_color(materials, Vector3::new(lerp.x, lerp.y, lerp.z));
                                 }
                                 FluidsRenderingMode::VelocityArrows { min, max } => {
                                     let lerp = Self::lerp_velocity(
@@ -419,7 +419,7 @@ impl TestbedPlugin for FluidsTestbedPlugin {
                                         max,
                                     );
                                     entity
-                                        .set_color(materials, Point3::new(lerp.x, lerp.y, lerp.z));
+                                        .set_color(materials, Vector3::new(lerp.x, lerp.y, lerp.z));
                                 }
                                 // FIXME: rapier needs to be updated to respect opacity
                                 // FluidsRenderingMode::VelocityColorOpacity { min, max } => {
@@ -432,7 +432,7 @@ impl TestbedPlugin for FluidsTestbedPlugin {
                                 //     entity.opacity = lerp.magnitude();
                                 //     entity.set_color(
                                 //         _materials,
-                                //         Point3::new(lerp.x, lerp.y, lerp.z),
+                                //         Vector3::new(lerp.x, lerp.y, lerp.z),
                                 //     );
                                 // }
                                 // FluidsRenderingMode::VelocityArrows => {}

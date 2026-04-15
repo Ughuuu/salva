@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point3, Unit, Vector3};
+use na::{Vector3, Unit, Vector3};
 use rapier3d::dynamics::{ImpulseJointSet, MultibodyJointSet, RigidBodySet};
 use rapier3d::geometry::ColliderSet;
 use rapier_testbed3d::{Testbed, TestbedApp};
@@ -30,16 +30,16 @@ pub fn init_world(testbed: &mut Testbed) {
     // fluids.
     let nparticles = 10;
     let custom_force1 = CustomForceField {
-        origin: Point3::new(1.0, 0.0, 0.0),
+        origin: Vector3::new(1.0, 0.0, 0.0),
     };
     let custom_force2 = CustomForceField {
-        origin: Point3::new(-1.0, 0.0, 0.0),
+        origin: Vector3::new(-1.0, 0.0, 0.0),
     };
     let mut fluid = helper::cube_fluid(nparticles, nparticles, nparticles, PARTICLE_RADIUS, 1000.0);
     fluid.nonpressure_forces.push(Box::new(custom_force1));
     fluid.nonpressure_forces.push(Box::new(custom_force2));
     let fluid_handle = fluids_pipeline.liquid_world.add_fluid(fluid);
-    plugin.set_fluid_color(fluid_handle, Point3::new(0.8, 0.7, 1.0));
+    plugin.set_fluid_color(fluid_handle, Vector3::new(0.8, 0.7, 1.0));
 
     /*
      * Set up the testbed.
@@ -56,7 +56,7 @@ pub fn init_world(testbed: &mut Testbed) {
         (),
     );
     testbed.integration_parameters_mut().dt = 1.0 / 200.0;
-    testbed.look_at(Point3::new(3.0, 3.0, 3.0), Point3::origin());
+    testbed.look_at(Vector3::new(3.0, 3.0, 3.0), Vector3::origin());
 }
 
 fn main() {
@@ -65,7 +65,7 @@ fn main() {
 }
 
 struct CustomForceField {
-    origin: Point3<f32>,
+    origin: Vector3<f32>,
 }
 
 impl NonPressureForce for CustomForceField {

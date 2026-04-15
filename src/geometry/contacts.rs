@@ -1,6 +1,6 @@
 use crate::counters::Counters;
 use crate::geometry::HGrid;
-use crate::math::{Point, Real, Vector};
+use crate::math::{Vector, Real};
 use crate::object::Boundary;
 use crate::object::Fluid;
 
@@ -258,9 +258,9 @@ fn compute_contacts_for_pair_of_cells(
     fluid_fluid_contacts: &[ParticlesContacts],
     fluid_boundary_contacts: &[ParticlesContacts],
     boundary_boundary_contacts: &[ParticlesContacts],
-    curr_cell: &Point<i64>,
+    curr_cell: &Vector<i64>,
     curr_particles: &[HGridEntry],
-    neighbor_cell: &Point<i64>,
+    neighbor_cell: &Vector<i64>,
     neighbor_particles: &[HGridEntry],
 ) {
     for entry in curr_particles {

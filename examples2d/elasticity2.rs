@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Isometry2, Point2, Point3, Vector2};
+use na::{Isometry2, Vector2, Vector3, Vector2};
 use rapier2d::dynamics::{ImpulseJointSet, MultibodyJointSet, RigidBodyBuilder, RigidBodySet};
 use rapier2d::geometry::{ColliderBuilder, ColliderSet};
 use rapier_testbed2d::Testbed;
@@ -49,7 +49,7 @@ pub fn init_world(testbed: &mut Testbed) {
     fluid.nonpressure_forces.push(Box::new(elasticity));
     fluid.nonpressure_forces.push(Box::new(viscosity.clone()));
     let fluid_handle = fluids_pipeline.liquid_world.add_fluid(fluid);
-    plugin.set_fluid_color(fluid_handle, Point3::new(0.8, 0.7, 1.0));
+    plugin.set_fluid_color(fluid_handle, Vector3::new(0.8, 0.7, 1.0));
 
     // Second fluid with smaller young modulus.
     let elasticity: Becker2009Elasticity = Becker2009Elasticity::new(100_000.0, 0.3, true);
@@ -61,7 +61,7 @@ pub fn init_world(testbed: &mut Testbed) {
     fluid.nonpressure_forces.push(Box::new(elasticity));
     fluid.nonpressure_forces.push(Box::new(viscosity));
     let fluid_handle = fluids_pipeline.liquid_world.add_fluid(fluid);
-    plugin.set_fluid_color(fluid_handle, Point3::new(0.6, 0.8, 0.5));
+    plugin.set_fluid_color(fluid_handle, Vector3::new(0.6, 0.8, 0.5));
 
     // Setup the ground.
     let ground_handle = bodies.insert(RigidBodyBuilder::fixed().build());
@@ -91,5 +91,5 @@ pub fn init_world(testbed: &mut Testbed) {
         (),
     );
     testbed.integration_parameters_mut().dt = 1.0 / 200.0;
-    testbed.look_at(Point2::new(0.0, 1.0), 100.0);
+    testbed.look_at(Vector2::new(0.0, 1.0), 100.0);
 }

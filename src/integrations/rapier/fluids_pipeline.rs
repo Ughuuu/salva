@@ -8,7 +8,7 @@ use approx::AbsDiffEq;
 use na::Unit;
 use rapier::dynamics::RigidBodySet;
 use rapier::geometry::{ColliderHandle, ColliderSet};
-use rapier::math::{Point, Vector};
+use rapier::math::{Vector, Vector};
 use rapier::parry::bounding_volume::BoundingVolume;
 use rapier::parry::shape::FeatureId;
 use std::collections::HashMap;
@@ -79,7 +79,7 @@ pub enum ColliderSampling {
     ///
     /// It is recommended that those points are separated by a distance smaller or equal to twice
     /// the particle radius used to initialize the LiquidWorld.
-    StaticSampling(Vec<Point<math::Real>>),
+    StaticSampling(Vec<Vector<math::Real>>),
     /// The collider shape is approximated by a dynamic set of points automatically computed based on contacts with fluid particles.
     DynamicContactSampling,
 }

@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Isometry3, Point3, Vector3};
+use na::{Isometry3, Vector3, Vector3};
 use rapier3d::dynamics::{ImpulseJointSet, MultibodyJointSet, RigidBodyBuilder, RigidBodySet};
 use rapier3d::geometry::{ColliderBuilder, ColliderSet, SharedShape};
 use rapier_testbed3d::{Testbed, TestbedApp};
@@ -103,7 +103,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let mut plugin = FluidsTestbedPlugin::new();
     plugin.set_pipeline(fluids_pipeline);
-    plugin.set_fluid_color(fluid_handle, Point3::new(0.8, 0.7, 1.0));
+    plugin.set_fluid_color(fluid_handle, Vector3::new(0.8, 0.7, 1.0));
     plugin.render_boundary_particles = true;
     testbed.add_plugin(plugin);
     // testbed.set_body_wireframe(ground_handle, true);
@@ -116,7 +116,7 @@ pub fn init_world(testbed: &mut Testbed) {
         (),
     );
     testbed.integration_parameters_mut().dt = 1.0 / 200.0;
-    testbed.look_at(Point3::new(3.0, 3.0, 3.0), Point3::origin());
+    testbed.look_at(Vector3::new(3.0, 3.0, 3.0), Vector3::origin());
 }
 
 fn main() {

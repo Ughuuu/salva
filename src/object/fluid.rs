@@ -1,4 +1,4 @@
-use crate::math::{Isometry, Point, Real, Vector};
+use crate::math::{Isometry, Vector, Real, Vector};
 use crate::object::{ContiguousArena, ContiguousArenaIndex};
 use crate::solver::NonPressureForce;
 
@@ -13,7 +13,7 @@ pub struct Fluid {
     /// Nonpressure forces this fluid is subject to.
     pub nonpressure_forces: Vec<Box<dyn NonPressureForce>>,
     /// The world-space position of the fluid particles.
-    pub positions: Vec<Point<Real>>,
+    pub positions: Vec<Vector<Real>>,
     /// The velocities of the fluid particles.
     pub velocities: Vec<Vector<Real>>,
     /// The accelerations of the fluid particles.
@@ -38,7 +38,7 @@ impl Fluid {
     ///
     /// The particle radius should be the same as the radius used to initialize the liquid world.
     pub fn new(
-        particle_positions: Vec<Point<Real>>,
+        particle_positions: Vec<Vector<Real>>,
         particle_radius: Real, // XXX: remove this parameter since it is already defined by the liquid world.
         density0: Real,
         interaction_groups: InteractionGroups,
@@ -125,7 +125,7 @@ impl Fluid {
     /// If it is not `None`, then it must be a slice with the same length than `positions`.
     pub fn add_particles(
         &mut self,
-        positions: &[Point<Real>],
+        positions: &[Vector<Real>],
         velocities: Option<&[Vector<Real>]>,
     ) {
         let nparticles = self.positions.len() + positions.len();

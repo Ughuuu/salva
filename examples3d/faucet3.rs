@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point3, Vector3};
+use na::{Vector3, Vector3};
 use rapier3d::geometry::{ColliderBuilder, ColliderSet};
 use rapier3d::{
     dynamics::{RigidBodyBuilder, RigidBodySet},
@@ -45,7 +45,7 @@ pub fn init_world(testbed: &mut Testbed) {
     fluid.nonpressure_forces.push(Box::new(viscosity));
     fluid.nonpressure_forces.push(Box::new(tension));
     let fluid_handle = fluids_pipeline.liquid_world.add_fluid(fluid);
-    plugin.set_fluid_color(fluid_handle, Point3::new(0.5, 1.0, 1.0));
+    plugin.set_fluid_color(fluid_handle, Vector3::new(0.5, 1.0, 1.0));
 
     // Setup the ground.
     let ground_handle = bodies.insert(RigidBodyBuilder::fixed().build());
@@ -95,7 +95,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
         for i in 0..nparticles {
             for j in 0..nparticles {
-                let pos = Point3::new(i as f32 * diam, height, j as f32 * diam);
+                let pos = Vector3::new(i as f32 * diam, height, j as f32 * diam);
                 particles.push(pos + Vector3::new(shift, 0.0, shift));
                 velocities.push(Vector3::y() * vel);
             }
@@ -120,7 +120,7 @@ pub fn init_world(testbed: &mut Testbed) {
     );
     testbed.integration_parameters_mut().dt = 1.0 / 200.0;
     // testbed.enable_boundary_particles_rendering(true);
-    testbed.look_at(Point3::new(1.5, 0.0, 1.5), Point3::new(0.0, 0.0, 0.0));
+    testbed.look_at(Vector3::new(1.5, 0.0, 1.5), Vector3::new(0.0, 0.0, 0.0));
 }
 
 fn main() {

@@ -10,7 +10,7 @@ use crate::TimestepManager;
 use {
     crate::math::Isometry,
     crate::object::ParticleId,
-    parry::{bounding_volume::Aabb, query::PointQuery, shape::Shape},
+    parry::{bounding_volume::Aabb, query::VectorQuery, shape::Shape},
 };
 
 /// The physics world for simulating fluids with boundaries.

@@ -7,7 +7,7 @@ use approx::AbsDiffEq;
 
 use crate::geometry::{self, ParticlesContacts};
 use crate::kernel::{CubicSplineKernel, Kernel};
-use crate::math::{Matrix, Point, Real, RotationMatrix, SpatialVector, Vector};
+use crate::math::{Matrix, Vector, Real, RotationMatrix, SpatialVector, Vector};
 use crate::object::{Boundary, Fluid};
 use crate::solver::NonPressureForce;
 use crate::TimestepManager;
@@ -47,7 +47,7 @@ pub struct Becker2009Elasticity<
     d2: Real,
     nonlinear_strain: bool,
     volumes0: Vec<Real>,
-    positions0: Vec<Point<Real>>,
+    positions0: Vec<Vector<Real>>,
     contacts0: ParticlesContacts,
     rotations: Vec<RotationMatrix<Real>>,
     deformation_gradient_tr: Vec<Matrix<Real>>,

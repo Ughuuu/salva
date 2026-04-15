@@ -1,4 +1,4 @@
-use crate::math::{Point, Real};
+use crate::math::{Vector, Real};
 use num_traits::float::FloatCore;
 use std::cmp::Ordering;
 
@@ -6,7 +6,7 @@ pub fn apply_permutation<T: Clone>(permutation: &[usize], data: &[T]) -> Vec<T> 
     permutation.iter().map(|i| data[*i].clone()).collect()
 }
 
-pub fn compute_points_z_order(points: &[Point<Real>]) -> Vec<usize> {
+pub fn compute_points_z_order(points: &[Vector<Real>]) -> Vec<usize> {
     let mut indices: Vec<_> = (0..points.len()).collect();
     indices.sort_unstable_by(|i, j| {
         z_order_floats(points[*i].coords.as_slice(), points[*j].coords.as_slice())
@@ -15,7 +15,7 @@ pub fn compute_points_z_order(points: &[Point<Real>]) -> Vec<usize> {
     indices
 }
 
-// Fast construction of k-Nearest Neighbor Graphs for Point Clouds
+// Fast construction of k-Nearest Neighbor Graphs for Vector Clouds
 // Michael Connor, Piyush Kumar
 // Algorithm 1
 //

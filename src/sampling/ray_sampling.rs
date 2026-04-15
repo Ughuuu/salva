@@ -1,4 +1,4 @@
-use crate::math::{Isometry, Point, Real, Vector, DIM};
+use crate::math::{Isometry, Vector, Real, Vector, DIM};
 
 use parry::bounding_volume::{Aabb, BoundingVolume};
 use parry::query::{Ray, RayCast};
@@ -9,7 +9,7 @@ use std::collections::HashSet;
 pub fn shape_surface_ray_sample<S: ?Sized + Shape>(
     shape: &S,
     particle_rad: Real,
-) -> Option<Vec<Point<Real>>> {
+) -> Option<Vec<Vector<Real>>> {
     let aabb = shape.compute_aabb(&Isometry::identity());
     Some(surface_ray_sample(shape, &aabb, particle_rad))
 }
@@ -18,7 +18,7 @@ pub fn shape_surface_ray_sample<S: ?Sized + Shape>(
 pub fn shape_volume_ray_sample<S: ?Sized + Shape>(
     shape: &S,
     particle_rad: Real,
-) -> Option<Vec<Point<Real>>> {
+) -> Option<Vec<Vector<Real>>> {
     let aabb = shape.compute_aabb(&Isometry::identity());
     Some(volume_ray_sample(shape, &aabb, particle_rad))
 }
@@ -28,7 +28,7 @@ pub fn surface_ray_sample<S: ?Sized + RayCast>(
     shape: &S,
     volume: &Aabb,
     particle_rad: Real,
-) -> Vec<Point<Real>> {
+) -> Vec<Vector<Real>> {
     let mut quantized_points = HashSet::new();
     let subdivision_size = particle_rad * na::convert::<_, Real>(2.0);
 
@@ -92,7 +92,7 @@ pub fn volume_ray_sample<S: ?Sized + RayCast>(
     shape: &S,
     volume: &Aabb,
     particle_rad: Real,
-) -> Vec<Point<Real>> {
+) -> Vec<Vector<Real>> {
     let mut quantized_points = HashSet::new();
     let subdivision_size = particle_rad * na::convert::<_, Real>(2.0);
 
@@ -164,13 +164,13 @@ pub fn volume_ray_sample<S: ?Sized + RayCast>(
 }
 
 fn sample_segment(
-    origin: &Point<Real>,
-    start: &Point<Real>,
+    origin: &Vector<Real>,
+    start: &Vector<Real>,
     a: Real,
     b: Real,
     subdivision_size: Real,
     dimension: usize,
-    out: &mut HashSet<Point<u32>>,
+    out: &mut HashSet<Vector<u32>>,
 ) {
     let mut quantized_pt = (start - origin).map(|e| {
         na::try_convert::<_, f64>(e / subdivision_size)
@@ -191,10 +191,10 @@ fn sample_segment(
 }
 
 fn unquantize_points(
-    origin: &Point<Real>,
+    origin: &Vector<Real>,
     subdivision_size: Real,
-    quantized_points: &HashSet<Point<u32>>,
-) -> Vec<Point<Real>> {
+    quantized_points: &HashSet<Vector<u32>>,
+) -> Vec<Vector<Real>> {
     quantized_points
         .iter()
         .map(|qpt| {
@@ -207,12 +207,12 @@ fn unquantize_points(
 }
 
 fn quantize_point(
-    origin: &Point<Real>,
-    point: &Point<Real>,
+    origin: &Vector<Real>,
+    point: &Vector<Real>,
     subdivision_size: Real,
     entry_point: bool,
     leading_dimension: usize,
-) -> Point<u32> {
+) -> Vector<u32> {
     let mut dpt = point - origin;
     for i in 0..DIM {
         if i == leading_dimension {
