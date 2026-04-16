@@ -10,7 +10,7 @@ use crate::TimestepManager;
 use {
     crate::math::Isometry,
     crate::object::ParticleId,
-    parry::{bounding_volume::Aabb, query::VectorQuery, shape::Shape},
+    parry::{bounding_volume::Aabb, query::PointQuery, shape::Shape},
 };
 
 /// The physics world for simulating fluids with boundaries.
@@ -221,8 +221,10 @@ impl LiquidWorld {
         &'a self,
         aabb: Aabb,
     ) -> impl Iterator<Item = ParticleId> + 'a {
+        let mins = aabb.mins.into();
+        let maxs = aabb.maxs.into();
         self.hgrid
-            .cells_intersecting_aabb(&aabb.mins, &aabb.maxs)
+            .cells_intersecting_aabb(&mins, &maxs)
             .flat_map(|e| e.1)
             .filter_map(move |entry| match entry {
                 HGridEntry::FluidParticle(fid, pid) => {
@@ -235,9 +237,7 @@ impl LiquidWorld {
 
                     let pt = fluid.positions[*pid];
 
-                    // FIXME: use `distance_to_local_point` once it's supported.
-                    let id = &Isometry::identity();
-                    if aabb.distance_to_point(id, &pt, true) < self.particle_radius {
+                    if aabb.distance_to_local_point(pt.into(), true) < self.particle_radius {
                         Some(ParticleId::FluidParticle(handle, *pid))
                     } else {
                         None
@@ -255,9 +255,8 @@ impl LiquidWorld {
                     }
                     // --- END FIX ---
                     
-                    let pt = boundary.positions[*pid]; // FIXME: use `distance_to_local_point` once it's supported.
-                    let id = &Isometry::identity();
-                    if aabb.distance_to_point(id, &pt, true) < self.particle_radius {
+                    let pt = boundary.positions[*pid];
+                    if aabb.distance_to_local_point(pt.into(), true) < self.particle_radius {
                         Some(ParticleId::BoundaryParticle(handle, *pid))
                     } else {
                         None
@@ -276,9 +275,12 @@ impl LiquidWorld {
     where
         S: Shape,
     {
-        let aabb = shape.compute_aabb(pos);
+        let pos = (*pos).into();
+        let aabb = shape.compute_aabb(&pos);
+        let mins = aabb.mins.into();
+        let maxs = aabb.maxs.into();
         self.hgrid
-            .cells_intersecting_aabb(&aabb.mins, &aabb.maxs)
+            .cells_intersecting_aabb(&mins, &maxs)
             .flat_map(|e| e.1)
             .filter_map(move |entry| match entry {
                 HGridEntry::FluidParticle(fid, pid) => {
@@ -291,7 +293,7 @@ impl LiquidWorld {
 
                     let pt = fluid.positions[*pid];
 
-                    if shape.distance_to_point(pos, &pt, true) <= self.particle_radius {
+                    if shape.distance_to_point(&pos, pt.into(), true) <= self.particle_radius {
                         Some(ParticleId::FluidParticle(handle, *pid))
                     } else {
                         None
@@ -306,8 +308,8 @@ impl LiquidWorld {
                     }
                     // --- END FIX ---
 
-                    let pt = boundary.positions[*pid]; // FIXME: use `distance_to_local_point` once it's supported.
-                    if shape.distance_to_point(pos, &pt, true) <= self.particle_radius {
+                    let pt = boundary.positions[*pid];
+                    if shape.distance_to_point(&pos, pt.into(), true) <= self.particle_radius {
                         Some(ParticleId::BoundaryParticle(handle, *pid))
                     } else {
                         None

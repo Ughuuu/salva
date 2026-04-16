@@ -115,7 +115,7 @@ pub use crate::timestep_manager::TimestepManager;
 #[cfg(feature = "dim3")]
 pub mod math {
     use na::{
-        Isometry3, Matrix3, Matrix6, Matrix6xX, MatrixView6xX, MatrixViewMut6xX, Vector3, Rotation3,
+        Isometry3, Matrix3, Matrix6, Matrix6xX, MatrixView6xX, MatrixViewMut6xX, Rotation3,
         Translation3, UnitQuaternion, Vector3, Vector6, U3, U6,
     };
 
@@ -141,9 +141,6 @@ pub mod math {
 
     /// The dimension of the rotations.
     pub type AngularDim = U3;
-
-    /// The point type.
-    pub type Vector<Real> = Vector3<Real>;
 
     /// The angular vector type.
     pub type AngularVector<Real> = Vector3<Real>;
@@ -200,7 +197,7 @@ pub mod math {
 #[cfg(feature = "dim2")]
 pub mod math {
     use na::{
-        Isometry2, Matrix1, Matrix2, Matrix3, Matrix6xX, MatrixView3xX, MatrixViewMut3xX, Vector2,
+        Isometry2, Matrix1, Matrix2, Matrix3, Matrix6xX, MatrixView3xX, MatrixViewMut3xX,
         Rotation2, RowVector2, Translation2, UnitComplex, Vector1, Vector2, Vector3, U1, U2, U3,
     };
 
@@ -226,9 +223,6 @@ pub mod math {
 
     /// The dimension of a spatial vector.
     pub type SpatialDim = U3;
-
-    /// The point type.
-    pub type Vector<Real> = Vector2<Real>;
 
     /// The vector type with dimension `SpatialDim × 1`.
     pub type SpatialVector<Real> = Vector3<Real>;

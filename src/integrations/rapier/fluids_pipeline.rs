@@ -8,11 +8,31 @@ use approx::AbsDiffEq;
 use na::Unit;
 use rapier::dynamics::RigidBodySet;
 use rapier::geometry::{ColliderHandle, ColliderSet};
-use rapier::math::{Vector, Vector};
+use rapier::math::Vector as RapierVector;
 use rapier::parry::bounding_volume::BoundingVolume;
 use rapier::parry::shape::FeatureId;
 use std::collections::HashMap;
 use std::sync::RwLock;
+
+#[cfg(feature = "dim2")]
+fn salva_to_rapier_vector(v: math::Vector<math::Real>) -> RapierVector {
+    RapierVector::new(v.x, v.y)
+}
+
+#[cfg(feature = "dim3")]
+fn salva_to_rapier_vector(v: math::Vector<math::Real>) -> RapierVector {
+    RapierVector::new(v.x, v.y, v.z)
+}
+
+#[cfg(feature = "dim2")]
+fn rapier_to_salva_vector(v: RapierVector) -> math::Vector<math::Real> {
+    math::Vector::new(v.x, v.y)
+}
+
+#[cfg(feature = "dim3")]
+fn rapier_to_salva_vector(v: RapierVector) -> math::Vector<math::Real> {
+    math::Vector::new(v.x, v.y, v.z)
+}
 
 /// Pipeline for particle-based fluid simulation.
 pub struct FluidsPipeline {
@@ -60,14 +80,15 @@ impl FluidsPipeline {
     /// However, it will not integrate these forces. Use the `PhysicsPipeline` for this integration.
     pub fn step(
         &mut self,
-        gravity: &Vector<math::Real>,
+        gravity: &RapierVector,
         dt: math::Real,
         colliders: &ColliderSet,
         bodies: &mut RigidBodySet,
     ) {
+        let gravity = rapier_to_salva_vector(*gravity);
         self.liquid_world.step_with_coupling(
             dt,
-            gravity,
+            &gravity,
             &mut self.coupling.as_manager_mut(colliders, bodies),
         )
     }
@@ -79,7 +100,7 @@ pub enum ColliderSampling {
     ///
     /// It is recommended that those points are separated by a distance smaller or equal to twice
     /// the particle radius used to initialize the LiquidWorld.
-    StaticSampling(Vec<Vector<math::Real>>),
+    StaticSampling(Vec<math::Vector<math::Real>>),
     /// The collider shape is approximated by a dynamic set of points automatically computed based on contacts with fluid particles.
     DynamicContactSampling,
 }
@@ -192,12 +213,16 @@ impl<'a> CouplingManager for ColliderCouplingManager<'a> {
                 match &coupling.sampling_method {
                     ColliderSampling::StaticSampling(points) => {
                         for pt in points {
-                            boundary.positions.push(collider.position() * pt);
-                            let velocity = body.map(|b| b.velocity_at_point(pt));
+                            let rapier_pt = salva_to_rapier_vector(*pt);
+                            let world_pt = rapier_to_salva_vector(collider.position() * rapier_pt);
+                            boundary.positions.push(world_pt);
+                            let velocity = body.map(|b| b.velocity_at_point(rapier_pt));
 
                             boundary
                                 .velocities
-                                .push(velocity.unwrap_or(Vector::zeros()));
+                                .push(rapier_to_salva_vector(
+                                    velocity.unwrap_or(RapierVector::ZERO),
+                                ));
                         }
 
                         boundary.volumes.resize(points.len(), na::zero::<math::Real>());
@@ -210,9 +235,11 @@ impl<'a> CouplingManager for ColliderCouplingManager<'a> {
                             .shape()
                             .compute_aabb(&collider_pos)
                             .loosened(h + prediction);
+                        let mins = rapier_to_salva_vector(aabb.mins);
+                        let maxs = rapier_to_salva_vector(aabb.maxs);
 
                         for particle in hgrid
-                            .cells_intersecting_aabb(&aabb.mins, &aabb.maxs)
+                            .cells_intersecting_aabb(&mins, &maxs)
                             .flat_map(|e| e.1)
                         {
                                 match particle {
@@ -231,15 +258,16 @@ impl<'a> CouplingManager for ColliderCouplingManager<'a> {
                                     
                                     let particle_pos = fluid.positions[*particle_id]
                                         + fluid.velocities[*particle_id] * timestep.dt();
+                                    let rapier_particle_pos = salva_to_rapier_vector(particle_pos);
 
-                                    if aabb.contains_local_point(&particle_pos) {
+                                    if aabb.contains_local_point(rapier_particle_pos) {
                                         let (proj, feature) =
                                             collider.shape().project_point_and_get_feature(
                                                 &collider_pos,
-                                                &particle_pos,
+                                                rapier_particle_pos,
                                             );
 
-                                        let dpt = particle_pos - proj.point;
+                                        let dpt = particle_pos - rapier_to_salva_vector(proj.point);
 
                                         if let Some((normal, depth)) =
                                             Unit::try_new_and_get(dpt, math::Real::default_epsilon())
@@ -261,12 +289,14 @@ impl<'a> CouplingManager for ColliderCouplingManager<'a> {
                                         }
 
                                         let velocity =
-                                            body.map(|b| b.velocity_at_point(&proj.point));
+                                            body.map(|b| b.velocity_at_point(proj.point));
 
                                         boundary
                                             .velocities
-                                            .push(velocity.unwrap_or(Vector::zeros()));
-                                        boundary.positions.push(proj.point);
+                                            .push(rapier_to_salva_vector(
+                                                velocity.unwrap_or(RapierVector::ZERO),
+                                            ));
+                                        boundary.positions.push(rapier_to_salva_vector(proj.point));
                                         boundary.volumes.push(na::zero::<math::Real>());
                                         coupling.features.push(feature);
                                     }
@@ -301,7 +331,11 @@ impl<'a> CouplingManager for ColliderCouplingManager<'a> {
                             for (pos, force) in
                                 boundary.positions.iter().zip(forces.iter().cloned())
                             {
-                                body.apply_impulse_at_point(force * timestep.dt() * force_coefficient, *pos, true)
+                                body.apply_impulse_at_point(
+                                    salva_to_rapier_vector(force * timestep.dt() * force_coefficient),
+                                    salva_to_rapier_vector(*pos),
+                                    true,
+                                )
                             }
                         }
                     }

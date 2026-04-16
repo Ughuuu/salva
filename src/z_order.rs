@@ -1,4 +1,4 @@
-use crate::math::{Vector, Real};
+use crate::math::{Real, Vector};
 use num_traits::float::FloatCore;
 use std::cmp::Ordering;
 
@@ -9,7 +9,7 @@ pub fn apply_permutation<T: Clone>(permutation: &[usize], data: &[T]) -> Vec<T> 
 pub fn compute_points_z_order(points: &[Vector<Real>]) -> Vec<usize> {
     let mut indices: Vec<_> = (0..points.len()).collect();
     indices.sort_unstable_by(|i, j| {
-        z_order_floats(points[*i].coords.as_slice(), points[*j].coords.as_slice())
+        z_order_floats(points[*i].as_slice(), points[*j].as_slice())
             .unwrap_or(Ordering::Equal)
     });
     indices

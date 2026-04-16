@@ -1,4 +1,4 @@
-use crate::math::{Vector, Real, Vector};
+use crate::math::{Real, Vector};
 use approx::AbsDiffEq;
 use na::Unit;
 

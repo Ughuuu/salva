@@ -1,4 +1,4 @@
-use crate::math::{Isometry, Vector, Real, Vector, DIM};
+use crate::math::{Real, Vector, DIM};
 
 use parry::bounding_volume::{Aabb, BoundingVolume};
 use parry::query::{Ray, RayCast};
@@ -10,7 +10,7 @@ pub fn shape_surface_ray_sample<S: ?Sized + Shape>(
     shape: &S,
     particle_rad: Real,
 ) -> Option<Vec<Vector<Real>>> {
-    let aabb = shape.compute_aabb(&Isometry::identity());
+    let aabb = shape.compute_aabb(&parry::math::Pose::IDENTITY);
     Some(surface_ray_sample(shape, &aabb, particle_rad))
 }
 
@@ -19,7 +19,7 @@ pub fn shape_volume_ray_sample<S: ?Sized + Shape>(
     shape: &S,
     particle_rad: Real,
 ) -> Option<Vec<Vector<Real>>> {
-    let aabb = shape.compute_aabb(&Isometry::identity());
+    let aabb = shape.compute_aabb(&parry::math::Pose::IDENTITY);
     Some(volume_ray_sample(shape, &aabb, particle_rad))
 }
 
@@ -33,18 +33,20 @@ pub fn surface_ray_sample<S: ?Sized + RayCast>(
     let subdivision_size = particle_rad * na::convert::<_, Real>(2.0);
 
     let volume = volume.loosened(subdivision_size);
-    let maxs = volume.maxs;
-    let origin = volume.mins + Vector::repeat(subdivision_size / na::convert::<_, Real>(2.0));
+    let maxs: Vector<Real> = volume.maxs.into();
+    let origin: Vector<Real> = (volume.mins
+        + parry::math::Vector::splat(subdivision_size / na::convert::<_, Real>(2.0)))
+        .into();
     let mut curr = origin;
 
-    let mut perform_cast = |i, curr| {
+    let mut perform_cast = |i, curr: Vector<Real>| {
         let mut dir = Vector::zeros();
         dir[i] = na::one::<Real>();
-        let mut ray = Ray::new(curr, dir);
+        let mut ray = Ray::new(curr.into(), dir.into());
         let mut entry_point = true;
 
         while let Some(toi) = shape.cast_local_ray(&ray, Real::MAX, false) {
-            let impact = ray.point_at(toi);
+            let impact: Vector<Real> = ray.point_at(toi).into();
             let quantized_pt = quantize_point(&origin, &impact, subdivision_size, entry_point, i);
             let _ = quantized_points.insert(quantized_pt);
             ray.origin[i] += toi + subdivision_size / na::convert::<_, Real>(10.0);
@@ -97,13 +99,15 @@ pub fn volume_ray_sample<S: ?Sized + RayCast>(
     let subdivision_size = particle_rad * na::convert::<_, Real>(2.0);
 
     let volume = volume.loosened(subdivision_size);
-    let maxs = volume.maxs;
-    let origin = volume.mins + Vector::repeat(subdivision_size / na::convert::<_, Real>(2.0));
+    let maxs: Vector<Real> = volume.maxs.into();
+    let origin: Vector<Real> = (volume.mins
+        + parry::math::Vector::splat(subdivision_size / na::convert::<_, Real>(2.0)))
+        .into();
 
-    let mut perform_cast = |i, curr| {
+    let mut perform_cast = |i, curr: Vector<Real>| {
         let mut dir = Vector::zeros();
         dir[i] = na::one::<Real>();
-        let mut ray = Ray::new(curr, dir);
+        let mut ray = Ray::new(curr.into(), dir.into());
         let mut prev_impact = None;
 
         while let Some(toi) = shape.cast_local_ray(&ray, Real::MAX, false) {
@@ -199,9 +203,7 @@ fn unquantize_points(
         .iter()
         .map(|qpt| {
             origin
-                + qpt
-                    .coords
-                    .map(|e| na::convert::<_, Real>(e as f64) * subdivision_size)
+                + qpt.map(|e| na::convert::<_, Real>(e as f64) * subdivision_size)
         })
         .collect()
 }

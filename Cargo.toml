@@ -1,5 +1,6 @@
 [workspace]
 members = ["build/salva2d", "build/salva2d-f64", "build/salva3d", "build/salva3d-f64", "examples2d", "examples3d"]
+default-members = ["build/salva2d", "build/salva2d-f64", "build/salva3d", "build/salva3d-f64"]
 resolver = "2"
 
 [workspace.lints]

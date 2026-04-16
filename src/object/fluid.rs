@@ -1,4 +1,4 @@
-use crate::math::{Isometry, Vector, Real, Vector};
+use crate::math::{Isometry, Real, Vector};
 use crate::object::{ContiguousArena, ContiguousArenaIndex};
 use crate::solver::NonPressureForce;
 
@@ -164,7 +164,9 @@ impl Fluid {
 
     /// Apply the given transformation to each particle of this fluid.
     pub fn transform_by(&mut self, t: &Isometry<Real>) {
-        self.positions.iter_mut().for_each(|p| *p = t * *p)
+        self.positions
+            .iter_mut()
+            .for_each(|p| *p = t.translation.vector + t.rotation * *p)
     }
 
     /// The number of particles on this fluid.
@@ -176,7 +178,8 @@ impl Fluid {
     #[cfg(feature = "parry")]
     pub fn compute_aabb(&self, particle_radius: Real) -> parry::bounding_volume::Aabb {
         use parry::bounding_volume::{details::local_point_cloud_aabb, BoundingVolume};
-        local_point_cloud_aabb(self.positions.iter().copied()).loosened(particle_radius)
+        local_point_cloud_aabb(self.positions.iter().copied().map(Into::into))
+            .loosened(particle_radius)
     }
 
     /// The mass of the `i`-th particle of this fluid.

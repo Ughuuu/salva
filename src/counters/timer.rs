@@ -44,7 +44,7 @@ impl Timer {
     /// Pause the timer.
     pub fn pause(&mut self) {
         if self.enabled {
-            if let Some(start) = self.start {
+            if self.start.is_some() {
                 //self.time += instant::now() - start;
             }
             self.start = None;

@@ -1,4 +1,4 @@
-use crate::math::{Isometry, Vector, Real, Vector};
+use crate::math::{Isometry, Real, Vector};
 use crate::object::{ContiguousArena, ContiguousArenaIndex};
 
 use std::sync::RwLock;
@@ -53,7 +53,9 @@ impl Boundary {
 
     /// Transforms all the particle positions of this boundary by the given isometry.
     pub fn transform_by(&mut self, pose: &Isometry<Real>) {
-        self.positions.iter_mut().for_each(|p| *p = pose * *p);
+        self.positions
+            .iter_mut()
+            .for_each(|p| *p = pose.translation.vector + pose.rotation * *p);
     }
 
     /// Apply a force `f` to the `i`-th particle of this boundary object.
