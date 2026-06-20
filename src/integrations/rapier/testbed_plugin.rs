@@ -271,6 +271,7 @@ impl TestbedPlugin for FluidsTestbedPlugin {
         ui_context: &egui::Context,
         _harness: &mut Harness,
         _graphics: &mut GraphicsManager,
+        _window: &mut Window,
     ) {
         let _ = egui::Window::new("Fluids").show(ui_context, |ui| {
             let _ = ui.checkbox(
