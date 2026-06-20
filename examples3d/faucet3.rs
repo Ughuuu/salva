@@ -108,7 +108,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Set up the testbed.
      */
     plugin.set_pipeline(fluids_pipeline);
-    testbed.add_plugin(plugin);
+    plugin.add_to_testbed(testbed);
     testbed.set_body_wireframe(ground_handle, true);
     testbed.set_world_with_params(
         bodies,

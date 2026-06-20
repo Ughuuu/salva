@@ -46,7 +46,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     plugin.set_pipeline(fluids_pipeline);
     plugin.set_fluid_rendering_mode(FluidsRenderingMode::VelocityColor { min: 0.0, max: 5.0 });
-    testbed.add_plugin(plugin);
+    plugin.add_to_testbed(testbed);
     testbed.set_world_with_params(
         bodies,
         colliders,

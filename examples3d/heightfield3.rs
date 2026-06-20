@@ -92,7 +92,7 @@ pub fn init_world(testbed: &mut Testbed) {
     plugin.set_pipeline(fluids_pipeline);
     plugin.set_fluid_color(fluid_handle, Vector::new(0.8, 0.7, 1.0).into());
     // plugin.render_boundary_particles = true;
-    testbed.add_plugin(plugin);
+    plugin.add_to_testbed(testbed);
     testbed.set_body_wireframe(handle, true);
     testbed.integration_parameters_mut().dt = 1.0 / 200.0;
     // testbed.look_at(Vector3::new(3.0, 3.0, 3.0), Vector3::origin());

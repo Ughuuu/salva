@@ -6,10 +6,14 @@ use kiss3d::prelude::Vec2;
 use kiss3d::prelude::Vec3;
 use kiss3d::{color::Color, window::Window};
 use na::Vector3;
-use rapier_testbed::{egui, harness::Harness, GraphicsManager, PhysicsState, TestbedPlugin};
+use rapier_testbed::{
+    egui, harness::Harness, GraphicsManager, PhysicsState, Testbed, TestbedPlugin,
+};
 
 use crate::integrations::rapier::FluidsPipeline;
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 pub const FLUIDS_RENDERING_MAP: [(&str, FluidsRenderingMode); 3] = [
     ("Static", FluidsRenderingMode::StaticColor),
@@ -67,6 +71,8 @@ pub struct FluidsTestbedPlugin {
     default_fluid_color: Vector3<Real>,
 }
 
+struct SharedFluidsTestbedPlugin(Rc<RefCell<FluidsTestbedPlugin>>);
+
 impl FluidsTestbedPlugin {
     /// Initializes the plugin.
     pub fn new() -> Self {
@@ -85,6 +91,20 @@ impl FluidsTestbedPlugin {
     /// Adds a callback to be executed at each frame.
     pub fn add_callback(&mut self, f: impl FnMut(&mut Harness, &mut FluidsPipeline) + 'static) {
         self.callbacks.push(Box::new(f))
+    }
+
+    /// Adds this plugin to the Rapier testbed and registers fluid rendering.
+    pub fn add_to_testbed(self, testbed: &mut Testbed) {
+        let plugin = Rc::new(RefCell::new(self));
+        let renderer = Rc::clone(&plugin);
+
+        testbed.add_callback(move |graphics, _physics, _events, _run_state| {
+            if let Some(graphics) = graphics {
+                renderer.borrow().draw_fluids(graphics.window);
+            }
+        });
+
+        testbed.add_plugin(SharedFluidsTestbedPlugin(plugin));
     }
 
     /// Sets the fluids pipeline used by the testbed.
@@ -196,6 +216,40 @@ impl FluidsTestbedPlugin {
         let end = *point + *velocity * na::convert::<_, Real>(0.02);
         window.draw_line(Self::point(point), Self::point(&end), color, 1.5, false);
     }
+
+    fn draw_fluids(&self, window: &mut Window) {
+        let draw_velocities = matches!(
+            self.fluids_rendering_mode,
+            FluidsRenderingMode::VelocityArrows { .. }
+        );
+
+        for (handle, fluid) in self.fluids_pipeline.liquid_world.fluids().iter() {
+            let size = Self::particle_size(fluid.particle_radius());
+
+            for (point, velocity) in fluid.positions.iter().zip(fluid.velocities.iter()) {
+                let color = self.fluid_color(handle, velocity);
+                Self::draw_particle(window, point, color, size);
+
+                if draw_velocities && velocity.norm_squared() > na::zero() {
+                    Self::draw_velocity(window, point, velocity, color);
+                }
+            }
+        }
+
+        if self.render_boundary_particles {
+            let default_color = Vector3::repeat(na::convert::<_, Real>(0.5));
+            let size = Self::particle_size(self.fluids_pipeline.liquid_world.particle_radius());
+
+            for (handle, boundary) in self.fluids_pipeline.liquid_world.boundaries().iter() {
+                let color =
+                    Self::color(*self.boundary2color.get(&handle).unwrap_or(&default_color));
+
+                for point in &boundary.positions {
+                    Self::draw_particle(window, point, color, size);
+                }
+            }
+        }
+    }
 }
 
 impl TestbedPlugin for FluidsTestbedPlugin {
@@ -233,37 +287,7 @@ impl TestbedPlugin for FluidsTestbedPlugin {
         window: &mut Window,
         _harness: &mut Harness,
     ) {
-        let draw_velocities = matches!(
-            self.fluids_rendering_mode,
-            FluidsRenderingMode::VelocityArrows { .. }
-        );
-
-        for (handle, fluid) in self.fluids_pipeline.liquid_world.fluids().iter() {
-            let size = Self::particle_size(fluid.particle_radius());
-
-            for (point, velocity) in fluid.positions.iter().zip(fluid.velocities.iter()) {
-                let color = self.fluid_color(handle, velocity);
-                Self::draw_particle(window, point, color, size);
-
-                if draw_velocities && velocity.norm_squared() > na::zero() {
-                    Self::draw_velocity(window, point, velocity, color);
-                }
-            }
-        }
-
-        if self.render_boundary_particles {
-            let default_color = Vector3::repeat(na::convert::<_, Real>(0.5));
-            let size = Self::particle_size(self.fluids_pipeline.liquid_world.particle_radius());
-
-            for (handle, boundary) in self.fluids_pipeline.liquid_world.boundaries().iter() {
-                let color =
-                    Self::color(*self.boundary2color.get(&handle).unwrap_or(&default_color));
-
-                for point in &boundary.positions {
-                    Self::draw_particle(window, point, color, size);
-                }
-            }
-        }
+        self.draw_fluids(window);
     }
 
     fn update_ui(
@@ -296,5 +320,52 @@ impl TestbedPlugin for FluidsTestbedPlugin {
 
     fn profiling_string(&self) -> String {
         format!("Fluids: {:.2}ms", self.step_time)
+    }
+}
+
+impl TestbedPlugin for SharedFluidsTestbedPlugin {
+    fn init_plugin(&mut self) {
+        self.0.borrow_mut().init_plugin();
+    }
+
+    fn init_graphics(
+        &mut self,
+        graphics: &mut GraphicsManager,
+        window: &mut Window,
+        harness: &mut Harness,
+    ) {
+        self.0.borrow_mut().init_graphics(graphics, window, harness);
+    }
+
+    fn clear_graphics(&mut self, graphics: &mut GraphicsManager, window: &mut Window) {
+        self.0.borrow_mut().clear_graphics(graphics, window);
+    }
+
+    fn run_callbacks(&mut self, harness: &mut Harness) {
+        self.0.borrow_mut().run_callbacks(harness);
+    }
+
+    fn step(&mut self, physics: &mut PhysicsState) {
+        self.0.borrow_mut().step(physics);
+    }
+
+    fn draw(&mut self, graphics: &mut GraphicsManager, window: &mut Window, harness: &mut Harness) {
+        self.0.borrow_mut().draw(graphics, window, harness);
+    }
+
+    fn update_ui(
+        &mut self,
+        ui_context: &egui::Context,
+        harness: &mut Harness,
+        graphics: &mut GraphicsManager,
+        window: &mut Window,
+    ) {
+        self.0
+            .borrow_mut()
+            .update_ui(ui_context, harness, graphics, window);
+    }
+
+    fn profiling_string(&self) -> String {
+        self.0.borrow().profiling_string()
     }
 }
