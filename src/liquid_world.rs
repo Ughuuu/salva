@@ -246,14 +246,10 @@ impl LiquidWorld {
                 HGridEntry::BoundaryParticle(bid, pid) => {
                     let (boundary, handle) = self.boundaries.get_from_contiguous_index(*bid)?;
                     
-                    // --- DEFENSIVE FIX ---
-                    // Add a bounds check. This handles the race condition where
-                    // a boundary's particles are cleared or the boundary is freed
-                    // but the hgrid is not yet updated.
+                    // Defensive bounds check for fluids
                     if *pid >= boundary.positions.len() {
                         return None;
                     }
-                    // --- END FIX ---
                     
                     let pt = boundary.positions[*pid];
                     if aabb.distance_to_local_point(pt.into(), true) < self.particle_radius {
@@ -302,11 +298,10 @@ impl LiquidWorld {
                 HGridEntry::BoundaryParticle(bid, pid) => {
                     let (boundary, handle) = self.boundaries.get_from_contiguous_index(*bid)?;
 
-                    // --- DEFENSIVE FIX ---
+                    // Defensive bounds check for fluids
                     if *pid >= boundary.positions.len() {
                         return None;
                     }
-                    // --- END FIX ---
 
                     let pt = boundary.positions[*pid];
                     if shape.distance_to_point(&pos, pt.into(), true) <= self.particle_radius {

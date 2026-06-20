@@ -15,7 +15,7 @@ pub fn compute_points_z_order(points: &[Vector<Real>]) -> Vec<usize> {
     indices
 }
 
-// Fast construction of k-Nearest Neighbor Graphs for Vector Clouds
+// Fast construction of k-Nearest Neighbor Graphs for Point Clouds
 // Michael Connor, Piyush Kumar
 // Algorithm 1
 //
