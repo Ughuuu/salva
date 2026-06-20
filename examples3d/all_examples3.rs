@@ -5,7 +5,7 @@ use wasm_bindgen::prelude::*;
 
 use inflector::Inflector;
 
-use rapier_testbed3d::{Testbed, TestbedApp};
+use rapier_testbed3d::{Example, TestbedApp};
 use std::cmp::Ordering;
 
 mod basic3;
@@ -51,27 +51,30 @@ pub fn main() {
         .unwrap_or(String::new())
         .to_camel_case();
 
-    let mut builders: Vec<(_, fn(&mut Testbed))> = vec![
-        ("Basic", basic3::init_world),
-        ("Height field", heightfield3::init_world),
-        ("Custom Forces", custom_forces3::init_world),
-        ("Elasticity", elasticity3::init_world),
-        ("Faucet", faucet3::init_world), //FIXME: bug with adding & removing particles
-        ("Surface tension", surface_tension3::init_world),
+    let mut builders = vec![
+        Example::demo("Basic", basic3::init_world),
+        Example::demo("Height field", heightfield3::init_world),
+        Example::demo("Custom Forces", custom_forces3::init_world),
+        Example::demo("Elasticity", elasticity3::init_world),
+        Example::demo("Faucet", faucet3::init_world), //FIXME: bug with adding & removing particles
+        Example::demo("Surface tension", surface_tension3::init_world),
     ];
 
     // Lexicographic sort, with stress tests moved at the end of the list.
-    builders.sort_by(|a, b| match (a.0.starts_with("("), b.0.starts_with("(")) {
-        (true, true) | (false, false) => a.0.cmp(b.0),
-        (true, false) => Ordering::Greater,
-        (false, true) => Ordering::Less,
-    });
+    builders.sort_by(
+        |a, b| match (a.name.starts_with("("), b.name.starts_with("(")) {
+            (true, true) | (false, false) => a.name.cmp(b.name),
+            (true, false) => Ordering::Greater,
+            (false, true) => Ordering::Less,
+        },
+    );
 
     let i = builders
         .iter()
-        .position(|builder| builder.0.to_camel_case().as_str() == demo.as_str())
+        .position(|builder| builder.name.to_camel_case().as_str() == demo.as_str())
         .unwrap_or(0);
+    builders.rotate_left(i);
 
-    let testbed = TestbedApp::from_builders(i, builders);
-    testbed.run()
+    let testbed = TestbedApp::from_builders(builders);
+    pollster::block_on(testbed.run());
 }

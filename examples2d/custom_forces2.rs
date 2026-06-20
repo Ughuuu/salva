@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Vector2, Vector3, Unit, Vector2};
+use na::{Unit, Vector2, Vector3};
 use rapier2d::dynamics::{ImpulseJointSet, MultibodyJointSet, RigidBodySet};
 use rapier2d::geometry::ColliderSet;
 use rapier_testbed2d::Testbed;
@@ -52,11 +52,11 @@ pub fn init_world(testbed: &mut Testbed) {
         colliders,
         impulse_joints,
         multibody_joints,
-        gravity,
+        gravity.into(),
         (),
     );
     testbed.integration_parameters_mut().dt = 1.0 / 200.0;
-    testbed.look_at(Vector2::origin(), 300.0);
+    testbed.look_at(Vector2::zeros().into(), 300.0);
 }
 
 struct CustomForceField {

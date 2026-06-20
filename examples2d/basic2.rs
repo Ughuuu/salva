@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{DVector, Vector2, Vector3, Vector2};
+use na::{Vector2, Vector3};
 use rapier2d::dynamics::{ImpulseJointSet, MultibodyJointSet, RigidBodyBuilder, RigidBodySet};
 use rapier2d::geometry::{Collider, ColliderBuilder, ColliderSet};
 use rapier_testbed2d::Testbed;
@@ -79,17 +79,19 @@ pub fn init_world(testbed: &mut Testbed) {
     let ground_size = Vector2::new(10.0, 1.0);
     let nsubdivs = 50;
 
-    let heights = DVector::from_fn(nsubdivs + 1, |i, _| {
-        if i == 0 || i == nsubdivs {
-            20.0
-        } else {
-            (i as f32 * ground_size.x / (nsubdivs as f32)).cos() * 0.5
-        }
-    });
+    let heights: Vec<_> = (0..=nsubdivs)
+        .map(|i| {
+            if i == 0 || i == nsubdivs {
+                20.0
+            } else {
+                (i as f32 * ground_size.x / (nsubdivs as f32)).cos() * 0.5
+            }
+        })
+        .collect();
 
     let rigid_body = RigidBodyBuilder::fixed().build();
     let handle = bodies.insert(rigid_body);
-    let collider = ColliderBuilder::heightfield(heights, ground_size).build();
+    let collider = ColliderBuilder::heightfield(heights, ground_size.into()).build();
     let co_handle = colliders.insert_with_parent(collider, handle, &mut bodies);
     let bo_handle = fluids_pipeline
         .liquid_world
@@ -108,7 +110,7 @@ pub fn init_world(testbed: &mut Testbed) {
         let samples =
             salva2d::sampling::shape_surface_ray_sample(collider.shape(), PARTICLE_RADIUS).unwrap();
         let rb = RigidBodyBuilder::dynamic()
-            .translation(Vector2::new(x, y))
+            .translation(Vector2::new(x, y).into())
             .build();
         let rb_handle = bodies.insert(rb);
         let co_handle = colliders.insert_with_parent(collider, rb_handle, &mut bodies);
@@ -139,7 +141,7 @@ pub fn init_world(testbed: &mut Testbed) {
         colliders,
         impulse_joints,
         multibody_joints,
-        gravity,
+        gravity.into(),
         (),
     );
     testbed.integration_parameters_mut().dt = 1.0 / 200.0;

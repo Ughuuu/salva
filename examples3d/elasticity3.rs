@@ -1,9 +1,9 @@
 extern crate nalgebra as na;
 
-use na::{Isometry3, Vector3, Vector3};
+use na::{Isometry3, Vector3};
 use rapier3d::dynamics::{ImpulseJointSet, MultibodyJointSet, RigidBodyBuilder, RigidBodySet};
 use rapier3d::geometry::{ColliderBuilder, ColliderSet};
-use rapier_testbed3d::{Testbed, TestbedApp};
+use rapier_testbed3d::{Example, Testbed, TestbedApp};
 use salva3d::integrations::rapier::{
     ColliderSampling, FluidsPipeline, FluidsRenderingMode, FluidsTestbedPlugin,
 };
@@ -103,14 +103,14 @@ pub fn init_world(testbed: &mut Testbed) {
         colliders,
         impulse_joints,
         multibody_joints,
-        gravity,
+        gravity.into(),
         (),
     );
     testbed.integration_parameters_mut().dt = 1.0 / 200.0;
-    testbed.look_at(Vector3::new(1.5, 1.5, 1.5), Vector3::origin());
+    testbed.look_at(Vector3::new(1.5, 1.5, 1.5).into(), Vector3::zeros().into());
 }
 
 fn main() {
-    let testbed = TestbedApp::from_builders(0, vec![("Elasticity", init_world)]);
-    testbed.run()
+    let testbed = TestbedApp::from_builders(vec![Example::demo("Elasticity", init_world)]);
+    pollster::block_on(testbed.run());
 }

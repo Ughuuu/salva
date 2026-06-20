@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Isometry2, Vector2, Vector3, Vector2};
+use na::{Isometry2, Vector2, Vector3};
 use rapier2d::dynamics::{ImpulseJointSet, MultibodyJointSet, RigidBodyBuilder, RigidBodySet};
 use rapier2d::geometry::{ColliderBuilder, ColliderSet};
 use rapier_testbed2d::Testbed;
@@ -87,9 +87,9 @@ pub fn init_world(testbed: &mut Testbed) {
         colliders,
         impulse_joints,
         multibody_joints,
-        gravity,
+        gravity.into(),
         (),
     );
     testbed.integration_parameters_mut().dt = 1.0 / 200.0;
-    testbed.look_at(Vector2::new(0.0, 1.0), 100.0);
+    testbed.look_at(Vector2::new(0.0, 1.0).into(), 100.0);
 }

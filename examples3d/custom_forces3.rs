@@ -1,9 +1,9 @@
 extern crate nalgebra as na;
 
-use na::{Vector3, Unit, Vector3};
+use na::{Unit, Vector3};
 use rapier3d::dynamics::{ImpulseJointSet, MultibodyJointSet, RigidBodySet};
 use rapier3d::geometry::ColliderSet;
-use rapier_testbed3d::{Testbed, TestbedApp};
+use rapier_testbed3d::{Example, Testbed, TestbedApp};
 use salva3d::integrations::rapier::{FluidsPipeline, FluidsRenderingMode, FluidsTestbedPlugin};
 use salva3d::object::{Boundary, Fluid};
 use salva3d::solver::NonPressureForce;
@@ -52,16 +52,16 @@ pub fn init_world(testbed: &mut Testbed) {
         colliders,
         impulse_joints,
         multibody_joints,
-        gravity,
+        gravity.into(),
         (),
     );
     testbed.integration_parameters_mut().dt = 1.0 / 200.0;
-    testbed.look_at(Vector3::new(3.0, 3.0, 3.0), Vector3::origin());
+    testbed.look_at(Vector3::new(3.0, 3.0, 3.0).into(), Vector3::zeros().into());
 }
 
 fn main() {
-    let testbed = TestbedApp::from_builders(0, vec![("Boxes", init_world)]);
-    testbed.run()
+    let testbed = TestbedApp::from_builders(vec![Example::demo("Boxes", init_world)]);
+    pollster::block_on(testbed.run());
 }
 
 struct CustomForceField {

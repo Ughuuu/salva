@@ -1,9 +1,9 @@
 extern crate nalgebra as na;
 
-use na::{Isometry3, Vector3, Vector3};
+use na::{Isometry3, Vector3};
 use rapier3d::dynamics::{ImpulseJointSet, MultibodyJointSet, RigidBodyBuilder, RigidBodySet};
 use rapier3d::geometry::{ColliderBuilder, ColliderSet, SharedShape};
-use rapier_testbed3d::{Testbed, TestbedApp};
+use rapier_testbed3d::{Example, Testbed, TestbedApp};
 use salva3d::integrations::rapier::{ColliderSampling, FluidsPipeline, FluidsTestbedPlugin};
 use salva3d::object::interaction_groups::InteractionGroups;
 use salva3d::object::Boundary;
@@ -70,7 +70,7 @@ pub fn init_world(testbed: &mut Testbed) {
         let samples =
             salva3d::sampling::shape_surface_ray_sample(&*wall_shape, PARTICLE_RADIUS).unwrap();
         let co = ColliderBuilder::new(wall_shape.clone())
-            .position(*pose)
+            .position((*pose).into())
             .build();
         let co_handle = colliders.insert_with_parent(co, ground_handle, &mut bodies);
         let bo_handle = fluids_pipeline
@@ -112,14 +112,14 @@ pub fn init_world(testbed: &mut Testbed) {
         colliders,
         impulse_joints,
         multibody_joints,
-        gravity,
+        gravity.into(),
         (),
     );
     testbed.integration_parameters_mut().dt = 1.0 / 200.0;
-    testbed.look_at(Vector3::new(3.0, 3.0, 3.0), Vector3::origin());
+    testbed.look_at(Vector3::new(3.0, 3.0, 3.0).into(), Vector3::zeros().into());
 }
 
 fn main() {
-    let testbed = TestbedApp::from_builders(0, vec![("Basic", init_world)]);
-    testbed.run()
+    let testbed = TestbedApp::from_builders(vec![Example::demo("Basic", init_world)]);
+    pollster::block_on(testbed.run());
 }
