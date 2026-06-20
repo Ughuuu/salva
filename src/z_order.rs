@@ -9,8 +9,7 @@ pub fn apply_permutation<T: Clone>(permutation: &[usize], data: &[T]) -> Vec<T> 
 pub fn compute_points_z_order(points: &[Vector<Real>]) -> Vec<usize> {
     let mut indices: Vec<_> = (0..points.len()).collect();
     indices.sort_unstable_by(|i, j| {
-        z_order_floats(points[*i].as_slice(), points[*j].as_slice())
-            .unwrap_or(Ordering::Equal)
+        z_order_floats(points[*i].as_slice(), points[*j].as_slice()).unwrap_or(Ordering::Equal)
     });
     indices
 }

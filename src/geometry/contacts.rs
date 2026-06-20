@@ -1,6 +1,6 @@
 use crate::counters::Counters;
 use crate::geometry::HGrid;
-use crate::math::{Vector, Real};
+use crate::math::{Real, Vector};
 use crate::object::Boundary;
 use crate::object::Fluid;
 

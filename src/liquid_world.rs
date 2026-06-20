@@ -151,7 +151,11 @@ impl LiquidWorld {
                 self.boundaries.as_slice(),
             );
 
-            coupling.transmit_forces(&self.timestep_manager, &self.boundaries, self.boundary_force_coefficient);
+            coupling.transmit_forces(
+                &self.timestep_manager,
+                &self.boundaries,
+                self.boundary_force_coefficient,
+            );
             self.counters.stages.solver_time.pause();
         }
 
@@ -245,12 +249,12 @@ impl LiquidWorld {
                 }
                 HGridEntry::BoundaryParticle(bid, pid) => {
                     let (boundary, handle) = self.boundaries.get_from_contiguous_index(*bid)?;
-                    
+
                     // Defensive bounds check for fluids
                     if *pid >= boundary.positions.len() {
                         return None;
                     }
-                    
+
                     let pt = boundary.positions[*pid];
                     if aabb.distance_to_local_point(pt.into(), true) < self.particle_radius {
                         Some(ParticleId::BoundaryParticle(handle, *pid))

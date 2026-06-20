@@ -36,7 +36,7 @@ pub fn surface_ray_sample<S: ?Sized + RayCast>(
     let maxs: Vector<Real> = volume.maxs.into();
     let origin: Vector<Real> = (volume.mins
         + parry::math::Vector::splat(subdivision_size / na::convert::<_, Real>(2.0)))
-        .into();
+    .into();
     let mut curr = origin;
 
     let mut perform_cast = |i, curr: Vector<Real>| {
@@ -102,7 +102,7 @@ pub fn volume_ray_sample<S: ?Sized + RayCast>(
     let maxs: Vector<Real> = volume.maxs.into();
     let origin: Vector<Real> = (volume.mins
         + parry::math::Vector::splat(subdivision_size / na::convert::<_, Real>(2.0)))
-        .into();
+    .into();
 
     let mut perform_cast = |i, curr: Vector<Real>| {
         let mut dir = Vector::zeros();
@@ -201,10 +201,7 @@ fn unquantize_points(
 ) -> Vec<Vector<Real>> {
     quantized_points
         .iter()
-        .map(|qpt| {
-            origin
-                + qpt.map(|e| na::convert::<_, Real>(e as f64) * subdivision_size)
-        })
+        .map(|qpt| origin + qpt.map(|e| na::convert::<_, Real>(e as f64) * subdivision_size))
         .collect()
 }
 

@@ -1,7 +1,7 @@
 use fnv::FnvHasher;
 use std::collections::HashMap;
 
-use crate::math::{Vector, Real, DIM};
+use crate::math::{Real, Vector, DIM};
 
 use std::hash::BuildHasher;
 

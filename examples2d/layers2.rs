@@ -184,5 +184,6 @@ pub fn init_world(testbed: &mut Testbed) {
         (),
     );
     testbed.integration_parameters_mut().dt = 1.0 / 200.0;
+    testbed.look_at(Vector2::new(0.0, 5.5).into(), 50.0);
     //    testbed.enable_boundary_particles_rendering(true);
 }
