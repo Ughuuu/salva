@@ -121,11 +121,11 @@ where
 
     /// Set tuning parameters.
     pub fn set_parameters(&mut self, parameters: DfsphParameters) {
-        self.min_pressure_iter = parameters.min_pressure_iter;
-        self.max_pressure_iter = parameters.max_pressure_iter;
+        self.max_pressure_iter = parameters.max_pressure_iter.max(1);
+        self.min_pressure_iter = parameters.min_pressure_iter.min(self.max_pressure_iter);
         self.max_density_error = parameters.max_density_error;
-        self.min_divergence_iter = parameters.min_divergence_iter;
-        self.max_divergence_iter = parameters.max_divergence_iter;
+        self.max_divergence_iter = parameters.max_divergence_iter.max(1);
+        self.min_divergence_iter = parameters.min_divergence_iter.min(self.max_divergence_iter);
         self.max_divergence_error = parameters.max_divergence_error;
     }
 
@@ -149,8 +149,11 @@ where
                         denominator += c.weight;
                     }
 
-                    assert!(!denominator.is_zero());
-                    *volume = na::one::<Real>() / denominator;
+                    if denominator.is_zero() {
+                        *volume = na::zero();
+                    } else {
+                        *volume = na::one::<Real>() / denominator;
+                    }
                 })
         }
     }

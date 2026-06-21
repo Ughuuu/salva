@@ -206,6 +206,20 @@ impl FluidsTestbedPlugin {
             .unwrap_or(0)
     }
 
+    fn get_clamped_u32_setting(
+        settings: &mut ExampleSettings,
+        key: &'static str,
+        default: u32,
+        min: u32,
+        max: u32,
+    ) -> u32 {
+        let value = settings
+            .get_or_set_u32(key, default.clamp(min, max), min..=max)
+            .clamp(min, max);
+        settings.set_u32(key, value, min..=max);
+        value
+    }
+
     fn update_from_settings(&mut self, settings: &mut ExampleSettings) {
         self.render_boundary_particles =
             settings.get_or_set_bool(SETTINGS_RENDER_BOUNDARIES, self.render_boundary_particles);
@@ -224,15 +238,19 @@ impl FluidsTestbedPlugin {
             self.fluids_rendering_mode = *mode;
         }
 
-        let max_pressure_iter = settings.get_or_set_u32(
+        let max_pressure_iter = Self::get_clamped_u32_setting(
+            settings,
             SETTINGS_MAX_PRESSURE_ITER,
             self.dfsph_parameters.max_pressure_iter as u32,
-            0..=80,
+            1,
+            80,
         ) as usize;
-        let max_divergence_iter = settings.get_or_set_u32(
+        let max_divergence_iter = Self::get_clamped_u32_setting(
+            settings,
             SETTINGS_MAX_DIVERGENCE_ITER,
             self.dfsph_parameters.max_divergence_iter as u32,
-            0..=80,
+            1,
+            80,
         ) as usize;
         let max_density_error = settings.get_or_set_f32(
             SETTINGS_MAX_DENSITY_ERROR,
