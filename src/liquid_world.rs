@@ -4,7 +4,7 @@ use crate::geometry::{self, ContactManager, HGrid, HGridEntry};
 use crate::math::{Real, Vector};
 use crate::object::{Boundary, BoundaryHandle, BoundarySet};
 use crate::object::{Fluid, FluidHandle, FluidSet};
-use crate::solver::PressureSolver;
+use crate::solver::{DfsphParameters, PressureSolver};
 use crate::TimestepManager;
 #[cfg(feature = "parry")]
 use {
@@ -69,6 +69,16 @@ impl LiquidWorld {
     /// All the fluid particles will be affected by an acceleration equal to `gravity`.
     pub fn step(&mut self, dt: Real, gravity: &Vector<Real>) {
         self.step_with_coupling(dt, gravity, &mut ())
+    }
+
+    /// Current DFSPH tuning parameters, if this world uses DFSPH.
+    pub fn dfsph_parameters(&self) -> Option<DfsphParameters> {
+        self.solver.dfsph_parameters()
+    }
+
+    /// Set DFSPH tuning parameters if this world uses DFSPH.
+    pub fn set_dfsph_parameters(&mut self, parameters: DfsphParameters) -> bool {
+        self.solver.set_dfsph_parameters(parameters)
     }
 
     /// Advances the simulation by `dt` seconds, taking into account coupling with an external rigid-body engine.

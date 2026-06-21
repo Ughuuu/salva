@@ -2,10 +2,21 @@ use crate::counters::Counters;
 use crate::geometry::ContactManager;
 use crate::math::{Real, Vector};
 use crate::object::{Boundary, Fluid};
+use crate::solver::DfsphParameters;
 use crate::TimestepManager;
 
 /// Trait implemented by pressure solvers.
 pub trait PressureSolver {
+    /// Current DFSPH tuning parameters, if this solver is DFSPH.
+    fn dfsph_parameters(&self) -> Option<DfsphParameters> {
+        None
+    }
+
+    /// Set DFSPH tuning parameters if this solver is DFSPH.
+    fn set_dfsph_parameters(&mut self, _parameters: DfsphParameters) -> bool {
+        false
+    }
+
     /// Initialize this solver with the given fluids.
     fn init_with_fluids(&mut self, fluids: &[Fluid]);
 

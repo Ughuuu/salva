@@ -1,7 +1,7 @@
 use crate::coupling::CouplingManager;
 use crate::geometry::{HGrid, HGridEntry};
 use crate::object::{BoundaryHandle, BoundarySet, Fluid};
-use crate::solver::DFSPHSolver;
+use crate::solver::{DFSPHSolver, DfsphParameters, PressureSolver};
 use crate::TimestepManager;
 use crate::{math, LiquidWorld};
 use approx::AbsDiffEq;
@@ -55,6 +55,16 @@ impl FluidsPipeline {
         Self::new_with_boundary_coef(particle_radius, smoothing_factor, na::one::<math::Real>())
     }
 
+    /// Initialize a new pipeline with custom DFSPH solver parameters.
+    pub fn new_with_dfsph_parameters(
+        particle_radius: math::Real,
+        smoothing_factor: math::Real,
+        dfsph_parameters: DfsphParameters,
+    ) -> Self {
+        let dfsph: DFSPHSolver = DFSPHSolver::with_parameters(dfsph_parameters);
+        Self::new_with_solver(dfsph, particle_radius, smoothing_factor)
+    }
+
     /// Initialize a new pipeline for fluids simulation with a custom boundary force coefficient.
     ///
     /// # Parameters
@@ -70,16 +80,54 @@ impl FluidsPipeline {
         boundary_force_coefficient: math::Real,
     ) -> Self {
         let dfsph: DFSPHSolver = DFSPHSolver::new();
+        Self::new_with_solver_and_boundary_coef(
+            dfsph,
+            particle_radius,
+            smoothing_factor,
+            boundary_force_coefficient,
+        )
+    }
 
+    /// Initialize a new pipeline with a custom pressure solver.
+    pub fn new_with_solver(
+        solver: impl PressureSolver + Send + Sync + 'static,
+        particle_radius: math::Real,
+        smoothing_factor: math::Real,
+    ) -> Self {
+        Self::new_with_solver_and_boundary_coef(
+            solver,
+            particle_radius,
+            smoothing_factor,
+            na::one::<math::Real>(),
+        )
+    }
+
+    /// Initialize a new pipeline with a custom pressure solver and boundary force coefficient.
+    pub fn new_with_solver_and_boundary_coef(
+        solver: impl PressureSolver + Send + Sync + 'static,
+        particle_radius: math::Real,
+        smoothing_factor: math::Real,
+        boundary_force_coefficient: math::Real,
+    ) -> Self {
         Self {
             liquid_world: LiquidWorld::new(
-                dfsph,
+                solver,
                 particle_radius,
                 smoothing_factor,
                 boundary_force_coefficient,
             ),
             coupling: ColliderCouplingSet::new(),
         }
+    }
+
+    /// Current DFSPH tuning parameters, if this pipeline uses DFSPH.
+    pub fn dfsph_parameters(&self) -> Option<DfsphParameters> {
+        self.liquid_world.dfsph_parameters()
+    }
+
+    /// Set DFSPH tuning parameters if this pipeline uses DFSPH.
+    pub fn set_dfsph_parameters(&mut self, parameters: DfsphParameters) -> bool {
+        self.liquid_world.set_dfsph_parameters(parameters)
     }
 
     /// Advances the fluid simulation by `dt` seconds.

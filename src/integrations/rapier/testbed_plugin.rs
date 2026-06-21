@@ -7,10 +7,11 @@ use kiss3d::prelude::Vec3;
 use kiss3d::{color::Color, window::Window};
 use na::Vector3;
 use rapier_testbed::{
-    egui, harness::Harness, GraphicsManager, PhysicsState, Testbed, TestbedPlugin,
+    egui, harness::Harness, settings::ExampleSettings, GraphicsManager, PhysicsState, Testbed,
+    TestbedPlugin,
 };
 
-use crate::integrations::rapier::FluidsPipeline;
+use crate::integrations::rapier::{DfsphParameters, FluidsPipeline};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -32,6 +33,14 @@ pub const FLUIDS_RENDERING_MAP: [(&str, FluidsRenderingMode); 3] = [
         },
     ),
 ];
+
+const SETTINGS_RENDER_BOUNDARIES: &str = "Fluid render boundaries";
+const SETTINGS_RENDERING_MODE: &str = "Fluid rendering mode";
+const SETTINGS_MAX_PRESSURE_ITER: &str = "Fluid max pressure iter";
+const SETTINGS_MAX_DIVERGENCE_ITER: &str = "Fluid max divergence iter";
+const SETTINGS_MAX_DENSITY_ERROR: &str = "Fluid max density error";
+const SETTINGS_MAX_DIVERGENCE_ERROR: &str = "Fluid max divergence error";
+const SETTINGS_BOUNDARY_FORCE_COEFFICIENT: &str = "Fluid boundary force";
 
 /// How the fluids should be rendered by the testbed.
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -66,6 +75,7 @@ pub struct FluidsTestbedPlugin {
     callbacks: Vec<FluidCallback>,
     step_time: f64,
     fluids_pipeline: FluidsPipeline,
+    dfsph_parameters: DfsphParameters,
     f2color: HashMap<FluidHandle, Vector3<Real>>,
     boundary2color: HashMap<BoundaryHandle, Vector3<Real>>,
     default_fluid_color: Vector3<Real>,
@@ -82,6 +92,7 @@ impl FluidsTestbedPlugin {
             step_time: 0.0,
             callbacks: Vec::new(),
             fluids_pipeline: FluidsPipeline::new(0.025, 2.0),
+            dfsph_parameters: DfsphParameters::default(),
             f2color: HashMap::new(),
             boundary2color: HashMap::new(),
             default_fluid_color: Vector3::new(0.0, 0.0, 0.5),
@@ -100,7 +111,13 @@ impl FluidsTestbedPlugin {
 
         testbed.add_callback(move |graphics, _physics, _events, _run_state| {
             if let Some(graphics) = graphics {
-                renderer.borrow().draw_fluids(graphics.window);
+                let mut renderer = renderer.borrow_mut();
+
+                if let Some(settings) = graphics.settings.as_deref_mut() {
+                    renderer.update_from_settings(settings);
+                }
+
+                renderer.draw_fluids(graphics.window);
             }
         });
 
@@ -111,6 +128,7 @@ impl FluidsTestbedPlugin {
     pub fn set_pipeline(&mut self, fluids_pipeline: FluidsPipeline) {
         self.fluids_pipeline = fluids_pipeline;
         self.fluids_pipeline.liquid_world.counters.enable();
+        self.refresh_dfsph_parameters();
     }
 
     /// Sets the color used to render the specified fluid.
@@ -173,6 +191,81 @@ impl FluidsTestbedPlugin {
 
     fn particle_size(radius: Real) -> f32 {
         (radius as f32 * 300.0).clamp(2.5, 8.0)
+    }
+
+    fn refresh_dfsph_parameters(&mut self) {
+        if let Some(parameters) = self.fluids_pipeline.dfsph_parameters() {
+            self.dfsph_parameters = parameters;
+        }
+    }
+
+    fn rendering_mode_index(&self) -> usize {
+        FLUIDS_RENDERING_MAP
+            .iter()
+            .position(|(_, mode)| *mode == self.fluids_rendering_mode)
+            .unwrap_or(0)
+    }
+
+    fn update_from_settings(&mut self, settings: &mut ExampleSettings) {
+        self.render_boundary_particles =
+            settings.get_or_set_bool(SETTINGS_RENDER_BOUNDARIES, self.render_boundary_particles);
+
+        let rendering_options = FLUIDS_RENDERING_MAP
+            .iter()
+            .map(|(name, _)| (*name).to_string())
+            .collect();
+        let rendering_mode = settings.get_or_set_string(
+            SETTINGS_RENDERING_MODE,
+            self.rendering_mode_index(),
+            rendering_options,
+        );
+
+        if let Some((_, mode)) = FLUIDS_RENDERING_MAP.get(rendering_mode) {
+            self.fluids_rendering_mode = *mode;
+        }
+
+        let max_pressure_iter = settings.get_or_set_u32(
+            SETTINGS_MAX_PRESSURE_ITER,
+            self.dfsph_parameters.max_pressure_iter as u32,
+            0..=80,
+        ) as usize;
+        let max_divergence_iter = settings.get_or_set_u32(
+            SETTINGS_MAX_DIVERGENCE_ITER,
+            self.dfsph_parameters.max_divergence_iter as u32,
+            0..=80,
+        ) as usize;
+        let max_density_error = settings.get_or_set_f32(
+            SETTINGS_MAX_DENSITY_ERROR,
+            self.dfsph_parameters.max_density_error as f32,
+            0.0..=0.5,
+        );
+        let max_divergence_error = settings.get_or_set_f32(
+            SETTINGS_MAX_DIVERGENCE_ERROR,
+            self.dfsph_parameters.max_divergence_error as f32,
+            0.0..=2.0,
+        );
+
+        let boundary_force = settings.get_or_set_f32(
+            SETTINGS_BOUNDARY_FORCE_COEFFICIENT,
+            self.fluids_pipeline.liquid_world.boundary_force_coefficient as f32,
+            0.0..=1.0,
+        );
+        self.fluids_pipeline.liquid_world.boundary_force_coefficient =
+            na::convert::<_, Real>(boundary_force);
+
+        let dfsph_parameters = DfsphParameters {
+            min_pressure_iter: self.dfsph_parameters.min_pressure_iter,
+            max_pressure_iter,
+            max_density_error: na::convert::<_, Real>(max_density_error),
+            min_divergence_iter: self.dfsph_parameters.min_divergence_iter,
+            max_divergence_iter,
+            max_divergence_error: na::convert::<_, Real>(max_divergence_error),
+        };
+
+        if dfsph_parameters != self.dfsph_parameters {
+            self.dfsph_parameters = dfsph_parameters;
+            let _ = self.fluids_pipeline.set_dfsph_parameters(dfsph_parameters);
+        }
     }
 
     #[cfg(feature = "dim2")]
