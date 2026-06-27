@@ -52,7 +52,7 @@ generational-arena = "0.2"
 rayon = { version = "1.8", optional = true }
 
 nalgebra = { version = "0.35", features = ["convert-glam033"] }
-glamx = "0.3"
+glamx = { version = "0.3", features = ["nalgebra"] }
 parry2d = { version = "0.28", optional = true }
 rapier2d = { version = "0.33", optional = true }
 rapier_testbed2d = { version = "0.33", optional = true }

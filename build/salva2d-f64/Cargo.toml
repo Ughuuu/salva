@@ -47,7 +47,7 @@ generational-arena = "0.2"
 rayon = { version = "1.8", optional = true }
 
 nalgebra = { version = "0.35", features = ["convert-glam033"] }
-glamx = "0.3"
+glamx = { version = "0.3", features = ["nalgebra"] }
 parry2d-f64 = { version = "0.28", optional = true }
 rapier2d-f64 = { version = "0.33", optional = true }
 # TODO update it to f64
