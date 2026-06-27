@@ -6,7 +6,7 @@ use rapier3d::{
     dynamics::{RigidBodyBuilder, RigidBodySet},
     prelude::{ImpulseJointSet, MultibodyJointSet},
 };
-use rapier_testbed3d::harness::Harness;
+use rapier_testbed3d::harness::{Harness, RapierBroadPhaseType};
 use salva3d::integrations::rapier::{ColliderSampling, FluidsHarnessPlugin, FluidsPipeline};
 use salva3d::object::interaction_groups::InteractionGroups;
 use salva3d::object::Boundary;
@@ -74,7 +74,7 @@ pub fn init_world(harness: &mut Harness) {
         let samples =
             salva3d::sampling::shape_surface_ray_sample(&*wall_shape, PARTICLE_RADIUS).unwrap();
         let co = ColliderBuilder::new(wall_shape.clone())
-            .position(*pose)
+            .position((*pose).into())
             .build();
         let co_handle = colliders.insert_with_parent(co, ground_handle, &mut bodies);
         let bo_handle = fluids_pipeline
@@ -113,7 +113,8 @@ pub fn init_world(harness: &mut Harness) {
         colliders,
         impulse_joints,
         multibody_joints,
-        gravity,
+        RapierBroadPhaseType::default(),
+        gravity.into(),
         (),
     );
     harness.integration_parameters_mut().dt = 1.0 / 200.0;

@@ -83,8 +83,11 @@ where
                         denominator += c.weight;
                     }
 
-                    assert!(!denominator.is_zero());
-                    *volume = na::one::<Real>() / denominator;
+                    if denominator.is_zero() {
+                        *volume = na::zero();
+                    } else {
+                        *volume = na::one::<Real>() / denominator;
+                    }
                 })
         }
     }

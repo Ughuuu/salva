@@ -1,9 +1,9 @@
 extern crate nalgebra as na;
 
-use na::{Isometry3, Point3, Vector3};
+use na::{Isometry3, Vector3};
 use rapier3d::dynamics::{ImpulseJointSet, MultibodyJointSet, RigidBodyBuilder, RigidBodySet};
 use rapier3d::geometry::{ColliderBuilder, ColliderSet};
-use rapier_testbed3d::{Testbed, TestbedApp};
+use rapier_testbed3d::{Example, Testbed, TestbedApp};
 use salva3d::integrations::rapier::{
     ColliderSampling, FluidsPipeline, FluidsRenderingMode, FluidsTestbedPlugin,
 };
@@ -43,7 +43,7 @@ pub fn init_world(testbed: &mut Testbed) {
     fluid.nonpressure_forces.push(Box::new(surface_tension));
     fluid.nonpressure_forces.push(Box::new(viscosity));
     let fluid_handle = fluids_pipeline.liquid_world.add_fluid(fluid);
-    plugin.set_fluid_color(fluid_handle, Point3::new(0.8, 0.7, 1.0));
+    plugin.set_fluid_color(fluid_handle, Vector3::new(0.8, 0.7, 1.0));
 
     // Setup the ground.
     let ground_handle = bodies.insert(RigidBodyBuilder::fixed().build());
@@ -69,21 +69,24 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     plugin.set_pipeline(fluids_pipeline);
     plugin.set_fluid_rendering_mode(FluidsRenderingMode::VelocityColor { min: 0.0, max: 5.0 });
-    testbed.add_plugin(plugin);
+    plugin.add_to_testbed(testbed);
     testbed.set_body_wireframe(ground_handle, true);
     testbed.set_world_with_params(
         bodies,
         colliders,
         impulse_joints,
         multibody_joints,
-        gravity,
+        gravity.into(),
         (),
     );
     testbed.integration_parameters_mut().dt = 1.0 / 200.0;
-    testbed.look_at(Point3::new(0.25, 0.25, 0.25), Point3::origin());
+    testbed.look_at(
+        Vector3::new(0.25, 0.25, 0.25).into(),
+        Vector3::zeros().into(),
+    );
 }
 
 fn main() {
-    let testbed = TestbedApp::from_builders(0, vec![("Surface tension", init_world)]);
-    testbed.run()
+    let testbed = TestbedApp::from_builders(vec![Example::demo("Surface tension", init_world)]);
+    pollster::block_on(testbed.run());
 }

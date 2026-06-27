@@ -1,6 +1,6 @@
 use crate::counters::Counters;
 use crate::geometry::HGrid;
-use crate::math::{Point, Real, Vector};
+use crate::math::{Real, Vector};
 use crate::object::Boundary;
 use crate::object::Fluid;
 
@@ -258,9 +258,9 @@ fn compute_contacts_for_pair_of_cells(
     fluid_fluid_contacts: &[ParticlesContacts],
     fluid_boundary_contacts: &[ParticlesContacts],
     boundary_boundary_contacts: &[ParticlesContacts],
-    curr_cell: &Point<i64>,
+    curr_cell: &Vector<i64>,
     curr_particles: &[HGridEntry],
-    neighbor_cell: &Point<i64>,
+    neighbor_cell: &Vector<i64>,
     neighbor_particles: &[HGridEntry],
 ) {
     for entry in curr_particles {
@@ -282,7 +282,7 @@ fn compute_contacts_for_pair_of_cells(
                             let pi = &bi.positions[*particle_i];
                             let pj = &bj.positions[*particle_j];
 
-                            if na::distance_squared(pi, pj) <= h * h {
+                            if (*pi - *pj).norm_squared() <= h * h {
                                 let contact = Contact {
                                     i_model: *boundary_i,
                                     j_model: *boundary_j,
@@ -319,7 +319,7 @@ fn compute_contacts_for_pair_of_cells(
                             let pi = &boundaries[*boundary_i].positions[*particle_i];
                             let pj = &fluids[*fluid_j].positions[*particle_j];
 
-                            if na::distance_squared(pi, pj) <= h * h {
+                            if (*pi - *pj).norm_squared() <= h * h {
                                 let contact = Contact {
                                     i_model: *fluid_j,
                                     j_model: *boundary_i,
@@ -363,8 +363,8 @@ fn compute_contacts_for_pair_of_cells(
                         fluids[fluid_j].positions[particle_j]
                     };
 
-                    if na::distance_squared(&pi, &pj) <= h * h {
-                        assert!(na::distance_squared(&pj, &pi) <= h * h);
+                    if (pi - pj).norm_squared() <= h * h {
+                        assert!((pj - pi).norm_squared() <= h * h);
                         let contact = Contact {
                             i_model: *fluid_i,
                             j_model: fluid_j,
@@ -424,7 +424,7 @@ pub fn compute_self_contacts(h: Real, fluid: &Fluid, contacts: &mut ParticlesCon
                     let pi = fluid.positions[*particle_i];
                     let pj = fluid.positions[*particle_j];
 
-                    if na::distance_squared(&pi, &pj) <= h * h {
+                    if (pi - pj).norm_squared() <= h * h {
                         let contact = Contact {
                             i_model: 0,
                             j_model: 0,

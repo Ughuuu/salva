@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point2, Point3, Unit, Vector2};
+use na::{Unit, Vector2, Vector3};
 use rapier2d::dynamics::{ImpulseJointSet, MultibodyJointSet, RigidBodySet};
 use rapier2d::geometry::ColliderSet;
 use rapier_testbed2d::Testbed;
@@ -30,37 +30,37 @@ pub fn init_world(testbed: &mut Testbed) {
     // Liquid.
     let nparticles = 30;
     let custom_force1 = CustomForceField {
-        origin: Point2::new(1.0, 0.0),
+        origin: Vector2::new(1.0, 0.0),
     };
     let custom_force2 = CustomForceField {
-        origin: Point2::new(-1.0, 0.0),
+        origin: Vector2::new(-1.0, 0.0),
     };
     let mut fluid = helper::cube_fluid(nparticles, nparticles, PARTICLE_RADIUS, 1000.0);
     fluid.nonpressure_forces.push(Box::new(custom_force1));
     fluid.nonpressure_forces.push(Box::new(custom_force2));
     let fluid_handle = fluids_pipeline.liquid_world.add_fluid(fluid);
-    plugin.set_fluid_color(fluid_handle, Point3::new(0.8, 0.7, 1.0));
+    plugin.set_fluid_color(fluid_handle, Vector3::new(0.8, 0.7, 1.0));
 
     /*
      * Set up the testbed.
      */
     plugin.set_pipeline(fluids_pipeline);
     plugin.set_fluid_rendering_mode(FluidsRenderingMode::VelocityColor { min: 0.0, max: 5.0 });
-    testbed.add_plugin(plugin);
+    plugin.add_to_testbed(testbed);
     testbed.set_world_with_params(
         bodies,
         colliders,
         impulse_joints,
         multibody_joints,
-        gravity,
+        gravity.into(),
         (),
     );
     testbed.integration_parameters_mut().dt = 1.0 / 200.0;
-    testbed.look_at(Point2::origin(), 300.0);
+    testbed.look_at(Vector2::zeros().into(), 300.0);
 }
 
 struct CustomForceField {
-    origin: Point2<f32>,
+    origin: Vector2<f32>,
 }
 
 impl NonPressureForce for CustomForceField {

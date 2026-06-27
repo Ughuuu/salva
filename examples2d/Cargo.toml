@@ -5,17 +5,18 @@ authors = ["Sébastien Crozet <developer@crozet.re>"]
 edition = "2018"
 
 [features]
-default = []
-parallel = ["rapier_testbed2d/parallel"]
+default = ["parallel"]
+parallel = [ "rapier_testbed2d/parallel", "salva2d/parallel" ]
 
 [dependencies]
-Inflector = "0.11"
-nalgebra = "0.33"
-parry2d = "0.18"
-rapier2d = "0.23"
-rapier_testbed2d = "0.23"
-parry3d = "0.18"
+Inflector  = "0.11"
+nalgebra   = "0"
+parry2d = "0.28"
+rapier2d = "0.33"
+rapier_testbed2d = "0.33"
+parry3d = "0.28"
 bevy = "0.15"
+pollster = "0.4"
 
 [dependencies.salva2d]
 path = "../build/salva2d"

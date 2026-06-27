@@ -1,4 +1,4 @@
-use crate::math::{Isometry, Point, Real, Vector};
+use crate::math::{Isometry, Real, Vector};
 use crate::object::{ContiguousArena, ContiguousArenaIndex};
 use crate::solver::NonPressureForce;
 
@@ -13,7 +13,7 @@ pub struct Fluid {
     /// Nonpressure forces this fluid is subject to.
     pub nonpressure_forces: Vec<Box<dyn NonPressureForce>>,
     /// The world-space position of the fluid particles.
-    pub positions: Vec<Point<Real>>,
+    pub positions: Vec<Vector<Real>>,
     /// The velocities of the fluid particles.
     pub velocities: Vec<Vector<Real>>,
     /// The accelerations of the fluid particles.
@@ -23,7 +23,7 @@ pub struct Fluid {
     /// The rest density of this fluid.
     pub density0: Real,
     /// Mask indicating what particles have been deleted.
-    deleted_particles: Vec<bool>,
+    pub deleted_particles: Vec<bool>,
     /// Indicates if a bit of the `deleted_particles` mask has been set.
     num_deleted_particles: usize,
     /// The particles radius.
@@ -38,7 +38,7 @@ impl Fluid {
     ///
     /// The particle radius should be the same as the radius used to initialize the liquid world.
     pub fn new(
-        particle_positions: Vec<Point<Real>>,
+        particle_positions: Vec<Vector<Real>>,
         particle_radius: Real, // XXX: remove this parameter since it is already defined by the liquid world.
         density0: Real,
         interaction_groups: InteractionGroups,
@@ -125,7 +125,7 @@ impl Fluid {
     /// If it is not `None`, then it must be a slice with the same length than `positions`.
     pub fn add_particles(
         &mut self,
-        positions: &[Point<Real>],
+        positions: &[Vector<Real>],
         velocities: Option<&[Vector<Real>]>,
     ) {
         let nparticles = self.positions.len() + positions.len();
@@ -164,7 +164,9 @@ impl Fluid {
 
     /// Apply the given transformation to each particle of this fluid.
     pub fn transform_by(&mut self, t: &Isometry<Real>) {
-        self.positions.iter_mut().for_each(|p| *p = t * *p)
+        self.positions
+            .iter_mut()
+            .for_each(|p| *p = t.translation.vector + t.rotation * *p)
     }
 
     /// The number of particles on this fluid.
@@ -176,7 +178,8 @@ impl Fluid {
     #[cfg(feature = "parry")]
     pub fn compute_aabb(&self, particle_radius: Real) -> parry::bounding_volume::Aabb {
         use parry::bounding_volume::{details::local_point_cloud_aabb, BoundingVolume};
-        local_point_cloud_aabb(&self.positions).loosened(particle_radius)
+        local_point_cloud_aabb(self.positions.iter().copied().map(Into::into))
+            .loosened(particle_radius)
     }
 
     /// The mass of the `i`-th particle of this fluid.

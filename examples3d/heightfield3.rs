@@ -1,6 +1,7 @@
 extern crate nalgebra as na;
 
-use nalgebra::Isometry3;
+use nalgebra::{Isometry3, Vector3};
+use rapier3d::geometry::Array2;
 use rapier3d::na::ComplexField;
 use rapier3d::prelude::*;
 use rapier_testbed3d::Testbed;
@@ -37,7 +38,7 @@ pub fn init_world(testbed: &mut Testbed) {
     ));
     let viscosity = ArtificialViscosity::new(1.0, 0.0);
     fluid.nonpressure_forces.push(Box::new(viscosity));
-    fluid.velocities = vec![-Vector::y() * 10.; fluid.velocities.len()];
+    fluid.velocities = vec![-Vector3::y() * 10.; fluid.velocities.len()];
     let fluid_handle = fluids_pipeline.liquid_world.add_fluid(fluid);
 
     /*
@@ -46,19 +47,27 @@ pub fn init_world(testbed: &mut Testbed) {
     let ground_size = Vector::new(12.0, 1.0, 12.0);
     let nsubdivs = 40;
 
-    let heights = DMatrix::from_fn(nsubdivs + 1, nsubdivs + 1, |i, j| {
-        if i == 0 || i == nsubdivs || j == 0 || j == nsubdivs {
-            3.0
-        } else {
-            let x = i as f32 * ground_size.x / (nsubdivs as f32);
-            let z = j as f32 * ground_size.z / (nsubdivs as f32);
+    let heights = Array2::new(
+        nsubdivs + 1,
+        nsubdivs + 1,
+        (0..=nsubdivs)
+            .flat_map(|j| {
+                (0..=nsubdivs).map(move |i| {
+                    if i == 0 || i == nsubdivs || j == 0 || j == nsubdivs {
+                        3.0
+                    } else {
+                        let x = i as f32 * ground_size.x / (nsubdivs as f32);
+                        let z = j as f32 * ground_size.z / (nsubdivs as f32);
 
-            // NOTE: make sure we use the sin/cos from simba to ensure
-            // cross-platform determinism of the example when the
-            // enhanced_determinism feature is enabled.
-            ComplexField::sin(x) + ComplexField::cos(z)
-        }
-    });
+                        // NOTE: make sure we use the sin/cos from simba to ensure
+                        // cross-platform determinism of the example when the
+                        // enhanced_determinism feature is enabled.
+                        ComplexField::sin(x) + ComplexField::cos(z)
+                    }
+                })
+            })
+            .collect(),
+    );
 
     let rigid_body = RigidBodyBuilder::fixed().build();
     let handle = bodies.insert(rigid_body);
@@ -81,15 +90,15 @@ pub fn init_world(testbed: &mut Testbed) {
 
     let mut plugin = FluidsTestbedPlugin::new();
     plugin.set_pipeline(fluids_pipeline);
-    plugin.set_fluid_color(fluid_handle, Point::new(0.8, 0.7, 1.0));
+    plugin.set_fluid_color(fluid_handle, Vector::new(0.8, 0.7, 1.0).into());
     // plugin.render_boundary_particles = true;
-    testbed.add_plugin(plugin);
+    plugin.add_to_testbed(testbed);
     testbed.set_body_wireframe(handle, true);
     testbed.integration_parameters_mut().dt = 1.0 / 200.0;
-    // testbed.look_at(Point3::new(3.0, 3.0, 3.0), Point3::origin());
+    // testbed.look_at(Vector3::new(3.0, 3.0, 3.0), Vector3::origin());
     /*
      * Set up the testbed.
      */
     testbed.set_world(bodies, colliders, impulse_joints, multibody_joints);
-    testbed.look_at(point![100.0, 100.0, 100.0], Point::origin());
+    testbed.look_at(Vector::new(100.0, 100.0, 100.0), Vector::ZERO);
 }

@@ -1,4 +1,4 @@
-use crate::math::{Point, Real, Vector};
+use crate::math::{Real, Vector};
 use approx::AbsDiffEq;
 use na::Unit;
 
@@ -24,17 +24,17 @@ pub trait Kernel: Send + Sync {
     }
 
     /// Evaluate the kernel for the vector equal to `p1 - p2`.
-    fn points_apply(p1: &Point<Real>, p2: &Point<Real>, h: Real) -> Real {
+    fn points_apply(p1: &Vector<Real>, p2: &Vector<Real>, h: Real) -> Real {
         Self::apply(p1 - p2, h)
     }
 
     /// Differential wrt. the coordinates of `p1`.
-    fn points_apply_diff1(p1: &Point<Real>, p2: &Point<Real>, h: Real) -> Vector<Real> {
+    fn points_apply_diff1(p1: &Vector<Real>, p2: &Vector<Real>, h: Real) -> Vector<Real> {
         Self::apply_diff(p1 - p2, h)
     }
 
     /// Differential wrt. the coordinates of `p2`.
-    fn points_apply_diff2(p1: &Point<Real>, p2: &Point<Real>, h: Real) -> Vector<Real> {
+    fn points_apply_diff2(p1: &Vector<Real>, p2: &Vector<Real>, h: Real) -> Vector<Real> {
         -Self::apply_diff(p1 - p2, h)
     }
 }

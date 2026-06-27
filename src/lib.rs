@@ -26,7 +26,7 @@ The name of this library is inspired from the famous surrealist artist `Salvador
 #![deny(non_camel_case_types)]
 #![deny(unused_parens)]
 #![deny(non_upper_case_globals)]
-#![deny(unused_qualifications)]
+#![allow(unused_qualifications)]
 #![warn(missing_docs)] // FIXME: deny this
 #![deny(unused_results)]
 #![allow(type_alias_bounds)]
@@ -37,18 +37,30 @@ The name of this library is inspired from the famous surrealist artist `Salvador
 
 extern crate nalgebra as na;
 extern crate num_traits as num;
-#[cfg(all(feature = "dim2", feature = "parry"))]
+#[cfg(all(feature = "dim2", feature = "f32", feature = "parry"))]
 pub extern crate parry2d as parry;
-#[cfg(all(feature = "dim3", feature = "parry"))]
+#[cfg(all(feature = "dim2", feature = "f64", feature = "parry"))]
+pub extern crate parry2d_f64 as parry;
+#[cfg(all(feature = "dim3", feature = "f32", feature = "parry"))]
 pub extern crate parry3d as parry;
-#[cfg(all(feature = "dim2", feature = "rapier"))]
+#[cfg(all(feature = "dim3", feature = "f64", feature = "parry"))]
+pub extern crate parry3d_f64 as parry;
+#[cfg(all(feature = "dim2", feature = "f32", feature = "rapier"))]
 pub extern crate rapier2d as rapier;
-#[cfg(all(feature = "dim3", feature = "rapier"))]
+#[cfg(all(feature = "dim2", feature = "f64", feature = "rapier"))]
+pub extern crate rapier2d_f64 as rapier;
+#[cfg(all(feature = "dim3", feature = "f32", feature = "rapier"))]
 pub extern crate rapier3d as rapier;
-#[cfg(all(feature = "dim2", feature = "rapier-testbed"))]
-extern crate rapier_testbed2d as rapier_testbed;
-#[cfg(all(feature = "dim3", feature = "rapier-testbed"))]
-extern crate rapier_testbed3d as rapier_testbed;
+#[cfg(all(feature = "dim3", feature = "f64", feature = "rapier"))]
+pub extern crate rapier3d_f64 as rapier;
+#[cfg(all(feature = "dim2", feature = "f32", feature = "rapier-testbed"))]
+pub extern crate rapier_testbed2d as rapier_testbed;
+#[cfg(all(feature = "dim2", feature = "f64", feature = "rapier-testbed"))]
+pub extern crate rapier_testbed2d_f64 as rapier_testbed;
+#[cfg(all(feature = "dim3", feature = "f32", feature = "rapier-testbed"))]
+pub extern crate rapier_testbed3d as rapier_testbed;
+#[cfg(all(feature = "dim3", feature = "f64", feature = "rapier-testbed"))]
+pub extern crate rapier_testbed3d_f64 as rapier_testbed;
 
 macro_rules! par_iter {
     ($t: expr) => {{
@@ -103,7 +115,7 @@ pub use crate::timestep_manager::TimestepManager;
 #[cfg(feature = "dim3")]
 pub mod math {
     use na::{
-        Isometry3, Matrix3, Matrix6, Matrix6xX, MatrixView6xX, MatrixViewMut6xX, Point3, Rotation3,
+        Isometry3, Matrix3, Matrix6, Matrix6xX, MatrixView6xX, MatrixViewMut6xX, Rotation3,
         Translation3, UnitQuaternion, Vector3, Vector6, U3, U6,
     };
 
@@ -114,8 +126,12 @@ pub mod math {
     /// The maximum number of possible translations of a rigid body.
     pub const DIM: usize = 3;
 
+    #[cfg(all(feature = "f32"))]
     /// The scalar type.
     pub type Real = f32;
+    #[cfg(all(feature = "f64"))]
+    /// The scalar type.
+    pub type Real = f64;
 
     /// The dimension of the ambient space.
     pub type Dim = U3;
@@ -125,9 +141,6 @@ pub mod math {
 
     /// The dimension of the rotations.
     pub type AngularDim = U3;
-
-    /// The point type.
-    pub type Point<Real> = Point3<Real>;
 
     /// The angular vector type.
     pub type AngularVector<Real> = Vector3<Real>;
@@ -184,7 +197,7 @@ pub mod math {
 #[cfg(feature = "dim2")]
 pub mod math {
     use na::{
-        Isometry2, Matrix1, Matrix2, Matrix3, Matrix6xX, MatrixView3xX, MatrixViewMut3xX, Point2,
+        Isometry2, Matrix1, Matrix2, Matrix3, Matrix6xX, MatrixView3xX, MatrixViewMut3xX,
         Rotation2, RowVector2, Translation2, UnitComplex, Vector1, Vector2, Vector3, U1, U2, U3,
     };
 
@@ -195,8 +208,12 @@ pub mod math {
     /// The maximum number of possible translations of a rigid body.
     pub const DIM: usize = 2;
 
+    #[cfg(all(feature = "f32"))]
     /// The scalar type.
     pub type Real = f32;
+    #[cfg(all(feature = "f64"))]
+    /// The scalar type.
+    pub type Real = f64;
 
     /// The dimension of the ambient space.
     pub type Dim = U2;
@@ -206,9 +223,6 @@ pub mod math {
 
     /// The dimension of a spatial vector.
     pub type SpatialDim = U3;
-
-    /// The point type.
-    pub type Point<Real> = Point2<Real>;
 
     /// The vector type with dimension `SpatialDim × 1`.
     pub type SpatialVector<Real> = Vector3<Real>;

@@ -1,8 +1,7 @@
 use fnv::FnvHasher;
-
 use std::collections::HashMap;
 
-use crate::math::{Point, Real, Vector, DIM};
+use crate::math::{Real, Vector, DIM};
 
 use std::hash::BuildHasher;
 
@@ -20,7 +19,7 @@ impl BuildHasher for DeterministicState {
 /// A grid based on spacial hashing.
 #[derive(PartialEq, Debug, Clone)]
 pub struct HGrid<T> {
-    cells: HashMap<Point<i64>, Vec<T>, DeterministicState>,
+    cells: HashMap<Vector<i64>, Vec<T>, DeterministicState>,
     cell_width: Real,
 }
 
@@ -47,8 +46,8 @@ impl<T> HGrid<T> {
     }
 
     /// Computes the logical grid cell containing `point`.
-    pub fn key(&self, point: &Point<Real>) -> Point<i64> {
-        Point::from(point.coords.map(|e| Self::quantify(e, self.cell_width)))
+    pub fn key(&self, point: &Vector<Real>) -> Vector<i64> {
+        Vector::from(point.map(|e| Self::quantify(e, self.cell_width)))
     }
 
     /// Removes all elements from this grid.
@@ -57,7 +56,7 @@ impl<T> HGrid<T> {
     }
 
     /// Inserts the given `element` into the cell containing the given `point`.
-    pub fn insert(&mut self, point: &Point<Real>, element: T) {
+    pub fn insert(&mut self, point: &Vector<Real>, element: T) {
         let key = self.key(point);
         self.cells.entry(key).or_insert(Vec::new()).push(element)
     }
@@ -65,7 +64,7 @@ impl<T> HGrid<T> {
     /// Returns the element attached to the cell containing the given `point`.
     ///
     /// Returns `None` if the cell is empty.
-    pub fn cell_containing_point(&self, point: &Point<Real>) -> Option<&Vec<T>> {
+    pub fn cell_containing_point(&self, point: &Vector<Real>) -> Option<&Vec<T>> {
         let key = self.key(point);
         self.cells.get(&key)
     }
@@ -73,17 +72,17 @@ impl<T> HGrid<T> {
     /// An iterator through all the non-empty cells of this grid.
     ///
     /// The returned tuple include the cell indentifier, and the elements attached to this cell.
-    pub fn cells(&self) -> impl Iterator<Item = (&Point<i64>, &Vec<T>)> {
+    pub fn cells(&self) -> impl Iterator<Item = (&Vector<i64>, &Vec<T>)> {
         self.cells.iter()
     }
 
     /// The underlying hash map of this spacial grid.
-    pub fn inner_table(&self) -> &HashMap<Point<i64>, Vec<T>, DeterministicState> {
+    pub fn inner_table(&self) -> &HashMap<Vector<i64>, Vec<T>, DeterministicState> {
         &self.cells
     }
 
     /// Get the content of the logical cell identified by `key`.
-    pub fn cell(&self, key: &Point<i64>) -> Option<&Vec<T>> {
+    pub fn cell(&self, key: &Vector<i64>) -> Option<&Vec<T>> {
         self.cells.get(key)
     }
 
@@ -92,9 +91,9 @@ impl<T> HGrid<T> {
     /// The given cell itself will be yielded by this iterator too.
     pub fn neighbor_cells(
         &self,
-        cell: &Point<i64>,
+        cell: &Vector<i64>,
         radius: Real,
-    ) -> impl Iterator<Item = (Point<i64>, &Vec<T>)> {
+    ) -> impl Iterator<Item = (Vector<i64>, &Vec<T>)> {
         let cells = &self.cells;
         let quantified_radius = Self::quantify_ceil(radius, self.cell_width);
 
@@ -104,7 +103,7 @@ impl<T> HGrid<T> {
 
     //    pub fn elements_close_to_point<'a>(
     //        &'a self,
-    //        point: &Point<Real>,
+    //        point: &Vector<Real>,
     //        radius: Real,
     //    ) -> impl Iterator<Item = &T>
     //    {
@@ -121,9 +120,9 @@ impl<T> HGrid<T> {
     /// An iterator through all the cells intersecting the given AABB.
     pub fn cells_intersecting_aabb(
         &self,
-        mins: &Point<Real>,
-        maxs: &Point<Real>,
-    ) -> impl Iterator<Item = (Point<i64>, &Vec<T>)> {
+        mins: &Vector<Real>,
+        maxs: &Vector<Real>,
+    ) -> impl Iterator<Item = (Vector<i64>, &Vec<T>)> {
         let cells = &self.cells;
         let start = self.key(mins);
         let end = self.key(maxs);
@@ -132,20 +131,20 @@ impl<T> HGrid<T> {
             .filter_map(move |cell| cells.get(&cell).map(|c| (cell, c)))
     }
 
-    //    pub fn elements_containing_point(&self, point: &Point<Real>) -> impl Iterator<Item = &T> {
+    //    pub fn elements_containing_point(&self, point: &Vector<Real>) -> impl Iterator<Item = &T> {
     //        std::iter::empty()
     //    }
 }
 
 struct CellRangeIterator {
-    start: Point<i64>,
-    end: Point<i64>,
-    curr: Point<i64>,
+    start: Vector<i64>,
+    end: Vector<i64>,
+    curr: Vector<i64>,
     done: bool,
 }
 
 impl CellRangeIterator {
-    fn new(start: Point<i64>, end: Point<i64>) -> Self {
+    fn new(start: Vector<i64>, end: Vector<i64>) -> Self {
         Self {
             start,
             end,
@@ -154,7 +153,7 @@ impl CellRangeIterator {
         }
     }
 
-    fn with_center(center: Point<i64>, radius: i64) -> Self {
+    fn with_center(center: Vector<i64>, radius: i64) -> Self {
         let start = center - Vector::repeat(radius as i64);
         Self {
             start,
@@ -166,7 +165,7 @@ impl CellRangeIterator {
 }
 
 impl Iterator for CellRangeIterator {
-    type Item = Point<i64>;
+    type Item = Vector<i64>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.done {
@@ -200,32 +199,32 @@ mod test {
     #[cfg(feature = "dim2")]
     fn grid_neighbor_iterator() {
         use super::CellRangeIterator;
-        use crate::math::Point;
+        use crate::math::Vector;
 
         let expected = [
-            Point::new(-1, 0),
-            Point::new(0, 0),
-            Point::new(1, 0),
-            Point::new(2, 0),
-            Point::new(3, 0),
-            Point::new(-1, 1),
-            Point::new(0, 1),
-            Point::new(1, 1),
-            Point::new(2, 1),
-            Point::new(3, 1),
-            Point::new(-1, 2),
-            Point::new(0, 2),
-            Point::new(1, 2),
-            Point::new(2, 2),
-            Point::new(3, 2),
-            Point::new(-1, 3),
-            Point::new(0, 3),
-            Point::new(1, 3),
-            Point::new(2, 3),
-            Point::new(3, 3),
+            Vector::new(-1, 0),
+            Vector::new(0, 0),
+            Vector::new(1, 0),
+            Vector::new(2, 0),
+            Vector::new(3, 0),
+            Vector::new(-1, 1),
+            Vector::new(0, 1),
+            Vector::new(1, 1),
+            Vector::new(2, 1),
+            Vector::new(3, 1),
+            Vector::new(-1, 2),
+            Vector::new(0, 2),
+            Vector::new(1, 2),
+            Vector::new(2, 2),
+            Vector::new(3, 2),
+            Vector::new(-1, 3),
+            Vector::new(0, 3),
+            Vector::new(1, 3),
+            Vector::new(2, 3),
+            Vector::new(3, 3),
         ];
 
-        let iter = CellRangeIterator::with_center(Point::new(1, 2), 2);
+        let iter = CellRangeIterator::with_center(Vector::new(1, 2), 2);
 
         assert!(iter.zip(expected.iter()).all(|(a, b)| a == *b))
     }

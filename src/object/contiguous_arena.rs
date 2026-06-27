@@ -66,13 +66,13 @@ impl<Idx, T> ContiguousArena<Idx, T> {
 
     #[inline]
     /// Gets references to all the objects on this set.
-    pub fn values(&self) -> std::slice::Iter<T> {
+    pub fn values(&self) -> std::slice::Iter<'_, T> {
         self.objects.iter()
     }
 
     #[inline]
     /// Gets mutable references to all the objects on this set.
-    pub fn values_mut(&mut self) -> std::slice::IterMut<T> {
+    pub fn values_mut(&mut self) -> std::slice::IterMut<'_, T> {
         self.objects.iter_mut()
     }
 

@@ -13,6 +13,36 @@ use crate::object::{Boundary, Fluid};
 use crate::solver::{helper, PressureSolver};
 use crate::TimestepManager;
 
+/// Tuning parameters for the DFSPH solver.
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct DfsphParameters {
+    /// Minimum number of pressure iterations.
+    pub min_pressure_iter: usize,
+    /// Maximum number of pressure iterations.
+    pub max_pressure_iter: usize,
+    /// Maximum acceptable density error.
+    pub max_density_error: Real,
+    /// Minimum number of divergence iterations.
+    pub min_divergence_iter: usize,
+    /// Maximum number of divergence iterations.
+    pub max_divergence_iter: usize,
+    /// Maximum acceptable divergence error.
+    pub max_divergence_error: Real,
+}
+
+impl Default for DfsphParameters {
+    fn default() -> Self {
+        Self {
+            min_pressure_iter: 1,
+            max_pressure_iter: 50,
+            max_density_error: na::convert::<_, Real>(0.05),
+            min_divergence_iter: 1,
+            max_divergence_iter: 50,
+            max_divergence_error: na::convert::<_, Real>(0.1),
+        }
+    }
+}
+
 /// A DFSPH (Divergence Free Smoothed Particle Hydrodynamics) pressure solver.
 pub struct DFSPHSolver<
     KernelDensity: Kernel = CubicSplineKernel,
@@ -52,13 +82,14 @@ where
 {
     /// Initialize a new DFSPH pressure solver.
     pub fn new() -> Self {
+        let parameters = DfsphParameters::default();
         Self {
-            min_pressure_iter: 1,
-            max_pressure_iter: 50,
-            max_density_error: na::convert::<_, Real>(0.05),
-            min_divergence_iter: 1,
-            max_divergence_iter: 50,
-            max_divergence_error: na::convert::<_, Real>(0.1),
+            min_pressure_iter: parameters.min_pressure_iter,
+            max_pressure_iter: parameters.max_pressure_iter,
+            max_density_error: parameters.max_density_error,
+            min_divergence_iter: parameters.min_divergence_iter,
+            max_divergence_iter: parameters.max_divergence_iter,
+            max_divergence_error: parameters.max_divergence_error,
             min_neighbors_for_divergence_solve: if DIM == 2 { 6 } else { 20 },
             alphas: Vec::new(),
             densities: Vec::new(),
@@ -67,6 +98,35 @@ where
             velocity_changes: Vec::new(),
             phantoms: PhantomData,
         }
+    }
+
+    /// Initialize a new DFSPH pressure solver with custom parameters.
+    pub fn with_parameters(parameters: DfsphParameters) -> Self {
+        let mut solver = Self::new();
+        solver.set_parameters(parameters);
+        solver
+    }
+
+    /// Current tuning parameters.
+    pub fn parameters(&self) -> DfsphParameters {
+        DfsphParameters {
+            min_pressure_iter: self.min_pressure_iter,
+            max_pressure_iter: self.max_pressure_iter,
+            max_density_error: self.max_density_error,
+            min_divergence_iter: self.min_divergence_iter,
+            max_divergence_iter: self.max_divergence_iter,
+            max_divergence_error: self.max_divergence_error,
+        }
+    }
+
+    /// Set tuning parameters.
+    pub fn set_parameters(&mut self, parameters: DfsphParameters) {
+        self.max_pressure_iter = parameters.max_pressure_iter.max(1);
+        self.min_pressure_iter = parameters.min_pressure_iter.min(self.max_pressure_iter);
+        self.max_density_error = parameters.max_density_error;
+        self.max_divergence_iter = parameters.max_divergence_iter.max(1);
+        self.min_divergence_iter = parameters.min_divergence_iter.min(self.max_divergence_iter);
+        self.max_divergence_error = parameters.max_divergence_error;
     }
 
     fn compute_boundary_volumes(
@@ -89,8 +149,11 @@ where
                         denominator += c.weight;
                     }
 
-                    assert!(!denominator.is_zero());
-                    *volume = na::one::<Real>() / denominator;
+                    if denominator.is_zero() {
+                        *volume = na::zero();
+                    } else {
+                        *volume = na::one::<Real>() / denominator;
+                    }
                 })
         }
     }
@@ -523,6 +586,15 @@ where
     KernelDensity: Kernel,
     KernelGradient: Kernel,
 {
+    fn dfsph_parameters(&self) -> Option<DfsphParameters> {
+        Some(self.parameters())
+    }
+
+    fn set_dfsph_parameters(&mut self, parameters: DfsphParameters) -> bool {
+        self.set_parameters(parameters);
+        true
+    }
+
     fn init_with_fluids(&mut self, fluids: &[Fluid]) {
         // Resize every buffer.
         self.alphas.resize(fluids.len(), Vec::new());

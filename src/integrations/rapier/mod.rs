@@ -1,5 +1,6 @@
 //! Two-way coupling with the Rapier physics engine.
 
+pub use crate::solver::DfsphParameters;
 pub use fluids_pipeline::{
     ColliderCouplingManager, ColliderCouplingSet, ColliderSampling, FluidsPipeline,
 };

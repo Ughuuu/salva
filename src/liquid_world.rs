@@ -4,7 +4,7 @@ use crate::geometry::{self, ContactManager, HGrid, HGridEntry};
 use crate::math::{Real, Vector};
 use crate::object::{Boundary, BoundaryHandle, BoundarySet};
 use crate::object::{Fluid, FluidHandle, FluidSet};
-use crate::solver::PressureSolver;
+use crate::solver::{DfsphParameters, PressureSolver};
 use crate::TimestepManager;
 #[cfg(feature = "parry")]
 use {
@@ -26,6 +26,10 @@ pub struct LiquidWorld {
     contact_manager: ContactManager,
     timestep_manager: TimestepManager,
     hgrid: HGrid<HGridEntry>,
+    /// Coefficient applied when transmitting forces from fluids to coupled rigid bodies.
+    /// A value of 1.0 applies full force, 0.5 applies half force, etc.
+    /// Default is 1.0.
+    pub boundary_force_coefficient: Real,
 }
 
 impl LiquidWorld {
@@ -36,10 +40,13 @@ impl LiquidWorld {
     /// - `particle_radius`: the radius of every particle on this world.
     /// - `smoothing_factor`: the smoothing factor used to compute the SPH kernel radius.
     ///    The kernel radius will be computed as `particle_radius * smoothing_factor * 2.0.
+    /// - `boundary_force_coefficient`: coefficient applied when transmitting forces from fluids to boundaries.
+    ///    Default is 1.0 (full force). Use lower values (e.g., 0.5) to reduce fluid influence on rigid bodies.
     pub fn new(
         solver: impl PressureSolver + Send + Sync + 'static,
         particle_radius: Real,
         smoothing_factor: Real,
+        boundary_force_coefficient: Real,
     ) -> Self {
         let h = particle_radius * smoothing_factor * na::convert::<_, Real>(2.0);
         Self {
@@ -53,6 +60,7 @@ impl LiquidWorld {
             contact_manager: ContactManager::new(),
             timestep_manager: TimestepManager::new(particle_radius),
             hgrid: HGrid::new(h),
+            boundary_force_coefficient,
         }
     }
 
@@ -61,6 +69,16 @@ impl LiquidWorld {
     /// All the fluid particles will be affected by an acceleration equal to `gravity`.
     pub fn step(&mut self, dt: Real, gravity: &Vector<Real>) {
         self.step_with_coupling(dt, gravity, &mut ())
+    }
+
+    /// Current DFSPH tuning parameters, if this world uses DFSPH.
+    pub fn dfsph_parameters(&self) -> Option<DfsphParameters> {
+        self.solver.dfsph_parameters()
+    }
+
+    /// Set DFSPH tuning parameters if this world uses DFSPH.
+    pub fn set_dfsph_parameters(&mut self, parameters: DfsphParameters) -> bool {
+        self.solver.set_dfsph_parameters(parameters)
     }
 
     /// Advances the simulation by `dt` seconds, taking into account coupling with an external rigid-body engine.
@@ -143,7 +161,11 @@ impl LiquidWorld {
                 self.boundaries.as_slice(),
             );
 
-            coupling.transmit_forces(&self.timestep_manager, &self.boundaries);
+            coupling.transmit_forces(
+                &self.timestep_manager,
+                &self.boundaries,
+                self.boundary_force_coefficient,
+            );
             self.counters.stages.solver_time.pause();
         }
 
@@ -213,17 +235,23 @@ impl LiquidWorld {
         &'a self,
         aabb: Aabb,
     ) -> impl Iterator<Item = ParticleId> + 'a {
+        let mins = aabb.mins.into();
+        let maxs = aabb.maxs.into();
         self.hgrid
-            .cells_intersecting_aabb(&aabb.mins, &aabb.maxs)
+            .cells_intersecting_aabb(&mins, &maxs)
             .flat_map(|e| e.1)
             .filter_map(move |entry| match entry {
                 HGridEntry::FluidParticle(fid, pid) => {
                     let (fluid, handle) = self.fluids.get_from_contiguous_index(*fid)?;
+
+                    // Defensive bounds check for fluids
+                    if *pid >= fluid.positions.len() {
+                        return None;
+                    }
+
                     let pt = fluid.positions[*pid];
 
-                    // FIXME: use `distance_to_local_point` once it's supported.
-                    let id = &Isometry::identity();
-                    if aabb.distance_to_point(id, &pt, true) < self.particle_radius {
+                    if aabb.distance_to_local_point(pt.into(), true) < self.particle_radius {
                         Some(ParticleId::FluidParticle(handle, *pid))
                     } else {
                         None
@@ -231,9 +259,14 @@ impl LiquidWorld {
                 }
                 HGridEntry::BoundaryParticle(bid, pid) => {
                     let (boundary, handle) = self.boundaries.get_from_contiguous_index(*bid)?;
-                    let pt = boundary.positions[*pid]; // FIXME: use `distance_to_local_point` once it's supported.
-                    let id = &Isometry::identity();
-                    if aabb.distance_to_point(id, &pt, true) < self.particle_radius {
+
+                    // Defensive bounds check for fluids
+                    if *pid >= boundary.positions.len() {
+                        return None;
+                    }
+
+                    let pt = boundary.positions[*pid];
+                    if aabb.distance_to_local_point(pt.into(), true) < self.particle_radius {
                         Some(ParticleId::BoundaryParticle(handle, *pid))
                     } else {
                         None
@@ -252,16 +285,25 @@ impl LiquidWorld {
     where
         S: Shape,
     {
-        let aabb = shape.compute_aabb(pos);
+        let pos = (*pos).into();
+        let aabb = shape.compute_aabb(&pos);
+        let mins = aabb.mins.into();
+        let maxs = aabb.maxs.into();
         self.hgrid
-            .cells_intersecting_aabb(&aabb.mins, &aabb.maxs)
+            .cells_intersecting_aabb(&mins, &maxs)
             .flat_map(|e| e.1)
             .filter_map(move |entry| match entry {
                 HGridEntry::FluidParticle(fid, pid) => {
                     let (fluid, handle) = self.fluids.get_from_contiguous_index(*fid)?;
+
+                    // Defensive bounds check for fluids
+                    if *pid >= fluid.positions.len() {
+                        return None;
+                    }
+
                     let pt = fluid.positions[*pid];
 
-                    if shape.distance_to_point(pos, &pt, true) <= self.particle_radius {
+                    if shape.distance_to_point(&pos, pt.into(), true) <= self.particle_radius {
                         Some(ParticleId::FluidParticle(handle, *pid))
                     } else {
                         None
@@ -269,8 +311,14 @@ impl LiquidWorld {
                 }
                 HGridEntry::BoundaryParticle(bid, pid) => {
                     let (boundary, handle) = self.boundaries.get_from_contiguous_index(*bid)?;
-                    let pt = boundary.positions[*pid]; // FIXME: use `distance_to_local_point` once it's supported.
-                    if shape.distance_to_point(pos, &pt, true) <= self.particle_radius {
+
+                    // Defensive bounds check for fluids
+                    if *pid >= boundary.positions.len() {
+                        return None;
+                    }
+
+                    let pt = boundary.positions[*pid];
+                    if shape.distance_to_point(&pos, pt.into(), true) <= self.particle_radius {
                         Some(ParticleId::BoundaryParticle(handle, *pid))
                     } else {
                         None

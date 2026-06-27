@@ -1,4 +1,4 @@
-pub use self::dfsph_solver::DFSPHSolver;
+pub use self::dfsph_solver::{DFSPHSolver, DfsphParameters};
 pub use self::iisph_solver::IISPHSolver;
 pub use self::pressure_solver::PressureSolver;
 

@@ -46,3 +46,10 @@ is inspired from its renown painting [The Persistence of Memory](https://en.wiki
 - **Multiphase fluids**: mix several fluids with different characteristics (densities, viscosities, etc.)
 - Optional **two-way coupling** with bodies from **rapier**.
 - **WASM** support
+
+## Running examples
+
+```bash
+cargo run --release -p examples2d --bin all_examples2
+cargo run --release -p examples3d --bin all_examples3
+```

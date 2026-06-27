@@ -1,4 +1,4 @@
-use super::na::{Point3, Vector3};
+use super::na::Vector3;
 use salva3d::object::{interaction_groups::InteractionGroups, Fluid};
 
 pub fn cube_fluid(ni: usize, nj: usize, nk: usize, particle_rad: f32, density: f32) -> Fluid {
@@ -11,7 +11,7 @@ pub fn cube_fluid(ni: usize, nj: usize, nk: usize, particle_rad: f32, density: f
                 let x = (i as f32) * particle_rad * 2.0;
                 let y = (j as f32) * particle_rad * 2.0;
                 let z = (k as f32) * particle_rad * 2.0;
-                points.push(Point3::new(x, y, z) + Vector3::repeat(particle_rad) - half_extents);
+                points.push(Vector3::new(x, y, z) + Vector3::repeat(particle_rad) - half_extents);
             }
         }
     }
