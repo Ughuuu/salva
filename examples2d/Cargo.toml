@@ -11,10 +11,10 @@ parallel = [ "rapier_testbed2d/parallel", "salva2d/parallel" ]
 [dependencies]
 Inflector  = "0.11"
 nalgebra   = "0"
-parry2d = "0.28"
-rapier2d = "0.33"
-rapier_testbed2d = "0.33"
-parry3d = "0.28"
+parry2d = "0.29"
+rapier2d = "0.34"
+rapier_testbed2d = "0.34"
+parry3d = "0.29"
 bevy = "0.15"
 pollster = "0.4"
 

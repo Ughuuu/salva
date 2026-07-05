@@ -53,10 +53,10 @@ rayon = { version = "1.8", optional = true }
 
 nalgebra = { version = "0.35", features = ["convert-glam033"] }
 glamx = { version = "0.3", features = ["nalgebra"] }
-parry2d = { version = "0.28", optional = true }
-rapier2d = { version = "0.33", optional = true }
-rapier_testbed2d = { version = "0.33", optional = true }
-kiss3d = { version = "0.43", optional = true }
+parry2d = { version = "0.29", optional = true }
+rapier2d = { version = "0.34", optional = true }
+rapier_testbed2d = { version = "0.34", optional = true }
+kiss3d = { version = "0.45", optional = true }
 
 bevy_egui = { version = "0.31", features = ["immutable_ctx"], optional = true }
 bitflags = "2"
