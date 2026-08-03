@@ -12,9 +12,9 @@ parallel = ["rapier_testbed3d/parallel", "salva3d/parallel"]
 num-traits = "0.2"
 Inflector  = "0.11"
 nalgebra   = "0"
-rapier3d = "0.34"
-rapier_testbed3d = "0.34"
-parry3d = "0.29"
+rapier3d = "0.35.0-beta.0"
+rapier_testbed3d = "0.35.0-beta.0"
+parry3d = "0.30"
 bevy = "0.15"
 pollster = "0.4"
 
