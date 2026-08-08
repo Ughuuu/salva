@@ -6,7 +6,7 @@ description = "2-dimensional particle-based fluid dynamics in Rust."
 documentation = "https://salva.rs/docs"
 homepage = "https://salva.rs"
 repository = "https://github.com/dimforge/salva"
-readme = "README.md"
+readme = "../../README.md"
 categories = [
     "science",
     "game-development",
