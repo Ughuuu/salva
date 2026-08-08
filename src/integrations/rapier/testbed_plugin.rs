@@ -150,12 +150,8 @@ impl FluidsTestbedPlugin {
     /// Call this right after `world.step()`.
     pub fn step(&mut self, world: &mut PhysicsWorld) {
         let dt = world.integration_parameters.dt;
-        self.fluids_pipeline.step(
-            &world.gravity,
-            dt,
-            &world.colliders,
-            &mut world.bodies,
-        );
+        self.fluids_pipeline
+            .step(&world.gravity, dt, &world.colliders, &mut world.bodies);
     }
 
     /// Renders the fluid (and optionally boundary) particles as instanced
@@ -474,7 +470,6 @@ impl FluidsTestbedPlugin {
         let end = *point + *velocity * na::convert::<_, Real>(0.02);
         window.draw_line(Self::point(point), Self::point(&end), color, 1.5, false);
     }
-
 }
 
 impl Default for FluidsTestbedPlugin {

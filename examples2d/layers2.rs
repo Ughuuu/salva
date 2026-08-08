@@ -143,9 +143,10 @@ pub async fn run(viewer: &mut TestbedViewer) -> anyhow::Result<()> {
                 rapier2d::geometry::Group::from(filter),
                 InteractionTestMode::And,
             ));
-            let co_handle = world
-                .colliders
-                .insert_with_parent(collider, rb_handle, &mut world.bodies);
+            let co_handle =
+                world
+                    .colliders
+                    .insert_with_parent(collider, rb_handle, &mut world.bodies);
             let bo_handle = fluids_pipeline
                 .liquid_world
                 .add_boundary(Boundary::new(Vec::new(), interaction_group));

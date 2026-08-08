@@ -13,8 +13,8 @@ parallel = ["rapier3d/parallel", "rapier_testbed3d/parallel", "salva3d/parallel"
 anyhow = "1"
 num-traits = "0.2"
 nalgebra = "0.35"
-rapier3d = "0.35.0"
-rapier_testbed3d = "0.35.0"
+rapier3d = "0.35.1"
+rapier_testbed3d = "0.35.1"
 parry3d = "0.30"
 kiss3d = { version = "0.45", features = ["rt_switcher"] }
 

@@ -108,25 +108,28 @@ pub async fn run(viewer: &mut TestbedViewer) -> anyhow::Result<()> {
      * Create the dynamic rigid-bodies.
      */
     let rad = 0.4;
-    let mut build_rigid_body_with_coupling = |world: &mut PhysicsWorld, x, y, collider: Collider| {
-        let samples =
-            salva2d::sampling::shape_surface_ray_sample(collider.shape(), PARTICLE_RADIUS).unwrap();
-        let rb = RigidBodyBuilder::dynamic()
-            .translation(Vector2::new(x, y).into())
-            .build();
-        let rb_handle = world.bodies.insert(rb);
-        let co_handle = world
-            .colliders
-            .insert_with_parent(collider, rb_handle, &mut world.bodies);
-        let bo_handle = fluids_pipeline
-            .liquid_world
-            .add_boundary(Boundary::new(Vec::new(), InteractionGroups::default()));
-        fluids_pipeline.coupling.register_coupling(
-            bo_handle,
-            co_handle,
-            ColliderSampling::StaticSampling(samples.clone()),
-        );
-    };
+    let mut build_rigid_body_with_coupling =
+        |world: &mut PhysicsWorld, x, y, collider: Collider| {
+            let samples =
+                salva2d::sampling::shape_surface_ray_sample(collider.shape(), PARTICLE_RADIUS)
+                    .unwrap();
+            let rb = RigidBodyBuilder::dynamic()
+                .translation(Vector2::new(x, y).into())
+                .build();
+            let rb_handle = world.bodies.insert(rb);
+            let co_handle =
+                world
+                    .colliders
+                    .insert_with_parent(collider, rb_handle, &mut world.bodies);
+            let bo_handle = fluids_pipeline
+                .liquid_world
+                .add_boundary(Boundary::new(Vec::new(), InteractionGroups::default()));
+            fluids_pipeline.coupling.register_coupling(
+                bo_handle,
+                co_handle,
+                ColliderSampling::StaticSampling(samples.clone()),
+            );
+        };
 
     let co1 = ColliderBuilder::cuboid(rad, rad).density(0.8).build();
     let co2 = ColliderBuilder::ball(rad).density(0.8).build();
